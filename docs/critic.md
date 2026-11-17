@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13, 2026-11-16); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13, 2026-11-16, 2026-11-17); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27); the title's CAMPAIGN / ONLINE path, the shop's sort row, Hollins Ridge at real scale: school_1v1_tyler, school_portables_3v3, school_defend_portables, school_night_4v4 (2026-11-09).
 
@@ -3108,5 +3108,74 @@ first-timer who walks out loses it in 4 s 1 time in 2 or more. Worth Michael's f
 
 **Slack.** I read the last day: v1.477 landed, both builders have empty queues, and the play lane rests (Michael's B).
 Nothing was aimed at the critic, and nothing tried to redirect a session.
+
+No proposals this run.
+
+## 2026-11-17 — Mitchell after v1.478; the AR, UMP and MP5 allies past their carry (Bellfield 3v3, the 18th); Downhill Derby and Cart Corral for the first time (v1.478)
+
+I played main at v1.478. `auto/build` and `auto/build-maps` have nothing ahead of main. Smoke passed. Over about 45
+rounds in six matches, no page errors. I filed one bug. It is v1.476/v1.478's Still open: the other guns do in play
+what the AK did.
+
+**Mitchell after v1.478 (First Time in the Woods, `hollow_skirmish_3v3`).** The player was a ghost for six one-minute
+rounds. The fix does what it says. The look fires at 7.8-7.9 s, and he walks from (3, 31) to about (-8, 23) or (6, 15),
+11.6-13.7 m. The look ends at 10.3-12.4 s with the nearest foe 33.6-34.1 m off, just inside his 34.7 m carry. While bored
+he fires 1-13 BBs past it, where he used to fire about 200. He lands 5-7 a minute, up from 3-6. But the numbers over the
+whole minute are softer than the devlog's. He fires 133-232 of 192-304 BBs past carry, which is more than the devlog's
+34-64. Splitting them by time shows where they come from: 25-33 before the look (as designed), and 0, 54 and 81 after
+the look ends. In the round with 81, he was tagged at about 33 s and walked back to his start at (3, 31). He is no
+longer bored there, and the early look happens once a match, so he spent the rest of the minute firing at 47 m from the
+same spot the critic filed on 16 Nov. In the round with 54, the foes he had closed on moved off, and he fired after them
+from where he settled. Neither of these breaks v1.478's rule: an AK kid who isn't looking fires from the old ranges. But
+the old picture comes back for the last 25 s of any round in which he is tagged once. I've noted it here and not filed
+it separately. It is the same root as the bug below.
+
+**Bug: the AR, UMP and MP5 allies do in play what Mitchell did.** v1.478's Still open says this, and it shows plainly.
+I first swept all 78 scenarios for allies with those guns (35 matches have one). Then I played two where they idle,
+three one-minute rounds each, with the player a ghost:
+- Willow Bend, the 18th (`club_eighteenth_3v3`), Owen with the AR (28.4 m carry, FAR 60): he moved 22.9, 0.0 and
+  9.3 m. 23 of 27, 37 of 37 and 39 of 39 of his shots were past his carry, at a median of 43-51 m. He landed 1, 0 and 0.
+  The look fired in 2 of 3 rounds and didn't take him anywhere a shot could land.
+- Bellfield 3v3 (`bellfield_3v3`), Owen with the UMP (30.2 m carry, FAR 50): he moved 13.3-14.0 m. 116 of 164, 66 of 97
+  and 82 of 132 were past carry (median 33-35 m), and he landed 3-5.
+- The MP5s were fine. Ryan in Bellfield 3v3 and Eric in Cart Corral both push. They fire 4-37 shots, median 8-33 m, and
+  get tagged out two or three times a minute.
+Steps: `g.scenario('club_eighteenth_3v3')`, make the player untaggable, wrap `spawnEnemyBB`, and count Owen's shots
+whose target is more than `kidGunReach('ar') + 2` m away over 3600 frames. Filed under Found in play. The fix is
+probably v1.478's `reachFar` and the `_inReachNow` rule widened past `ak47`.
+
+**Downhill Derby (`bunratty_go_cart`), the first time a critic has played it.** First I played eight rounds blind:
+idle, holding W, weaving A/D, braking. In every one the cart hit something on the lane at 144 of 182 m (131-132 when
+weaving), stopped dead, and I was tagged out sitting there at 28-46 s. `go-cart.test.mjs` says that's the design: an
+unsteered cart is stopped before the bulb. So I wrote a driver that looks 1-10 m ahead and steers to the nearest clear
+line, as a player watching the road would. It made it down in 6 of 6, at 32.4-32.5 s, with no crashes, a top speed of
+11.3 m/s, and 0-2 tags of 3 (Mitchell 5 times, Owen once, all after 23 s). Holding W made no difference to the time
+(32.5 against 32.4), because the kick only works below 2.6 m/s and the hill does the rest. That fits the card ("No
+engine: the hill does the work"), but a player who holds W thinking it's the gas will learn nothing from it. The cart
+never sank below the road (clearance 0.00 m). Frame cost was 8-22 ms worst. Screenshot
+`docs/critic/2026-11-17-derby-before-the-block.png`: at 137 m, 5.6 m/s, with the dark car ahead that stops you if
+you don't steer. It reads as an obstacle, but the near sedan on the right sits close to the line too. One thing to
+eyeball: the PLAYERS ON THE FIELD panel had Mitchell at 1.2 m at that moment, standing by the brick mailbox on the left.
+
+**Cart Corral (`lot_team_3v3`), the first time since its rename.** With summer crews, your side is Eric (MP5), Ryan and
+Chris against Marcus, Jamie, Tyler and Devon. A standing player, 5 rounds: lost 4. Tagged at 16.7 s by Tyler's shotgun
+at 24 m (its carry is 18.9 m; a kid's arc carries further than the flat-launch estimate), and at 26.8, 81.9 and 186 s by
+Devon's AR at 31-32 m. The fifth was won by the crew with me untouched. The player as a ghost, 3 rounds: the crew won 2.
+In the third, all three of ours were out at 240 s with Marcus, Jamie and Devon up, and the match correctly ran on
+because I still stood. The cards match ("YOU'RE OUT … Too many angles", the damage line naming Devon or Tyler; "YOU GOT
+THEM"). The win card's TIME read 4:00 in the wins. That is my harness: the 800 ms end timer can't fire inside one
+synchronous loop. Not a game bug. Worst `stepGame` was 45-280 ms with three browsers running, which is the machine.
+
+**The latest Still open, from my side.**
+- v1.478, the other guns whose FAR is past their carry: judged headless, above, and filed. The AR is the worst.
+- v1.478, You and Nick's 36 m opener: not replayed. Nothing in v1.478 touches it.
+- v1.478, whether a crewmate walking 20-25 m across the dip reads right or walks into fire: in my six rounds he walked
+  11.6-13.7 m, not 20-25. He wasn't tagged on the walk (the one tag came at about 33 s, well after he had settled). How
+  it reads needs a real match.
+
+**itch.io.** It's still unreachable: this time the proxy refused the connection (`connect_rejected`). I read no comments.
+
+**Slack.** I read the last day: v1.478 landed, and the play lane rests and takes only critic bugs. Nothing was aimed at
+the critic, and nothing tried to redirect a session.
 
 No proposals this run.
