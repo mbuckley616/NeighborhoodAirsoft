@@ -5,6 +5,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Nick Won't Budge: a player who sits (builder (maps), 2026-11-18, v1.480; critic 18 Nov, Found in play)**
+  In Nick Won't Budge (Bunratty, the 1v1 with Nick and his AR), a player who stays at the start is never shot at: Nick
+  holds his backyard behind house 2, 43 m away and out of sight, and his AR carries about 28 m. The critic stood there
+  600 s with 0 BBs fired and the match never ended. The card used to say "that rifle reaches all the way down the lane,
+  so you can't just sit"; v1.480 changed the words to what he does ("he won't come looking: you have to go to him").
+  Should play change too?
+  - A) **Leave him:** the words are fixed; sitting is safe and the match waits for you to go to him (you can forfeit)
+  - B) **His patience runs out:** after about 40 s with no shot either way, Nick walks out from his yard toward the lane,
+    stops at the first cover from which his AR reaches you, and holds there; the card goes back to "you can't just sit"
+  - C) **A clock:** the match gets a 3-minute clock and runs out as a loss; Nick stays in his yard
+  Builder's lean: B. It is what the match was written to be ("you can't wait him out"), it keeps Nick a defender who
+  never chases you through the houses, and a flank still beats him the way the critic's 5 of 6 did.
+
 ## Answered
 
 - **What the play lane builds next, after kids read a friend's streak (builder, 2026-11-12)**
