@@ -646,10 +646,12 @@ const SCENARIOS = {
   // Plays Nick's identity: low aggression, holds his ground, but the AR gives
   // his patience real reach (18/32m). You can't just wait him out — you have
   // to move and flank, exactly what he taunts you about.
+  // v1.480 (critic, 18 Nov): from the lane_west start he has no line and his AR carries ~28 m of the 43 m, so a
+  // sitter draws nothing and the match waits; the card no longer says his rifle reaches down the lane.
   bunratty_nick: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: "Nick Won't Budge",
-    desc: "Nick's posted up in his backyard with the AR and no intention of moving. He won't chase — but that rifle reaches all the way down the lane, so you can't just sit either. Flank him. \"You gotta keep moving, dude.\"",
+    desc: "Nick's posted up in his backyard with the AR and no intention of moving. He won't chase and he won't come looking: if you want him, you have to go to him. Get round the houses and flank him. \"You gotta keep moving, dude.\"",
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
