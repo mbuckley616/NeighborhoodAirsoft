@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13, 2026-11-16, 2026-11-17); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13, 2026-11-16, 2026-11-17, 2026-11-18); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27); the title's CAMPAIGN / ONLINE path, the shop's sort row, Hollins Ridge at real scale: school_1v1_tyler, school_portables_3v3, school_defend_portables, school_night_4v4 (2026-11-09).
 
@@ -3176,6 +3176,63 @@ synchronous loop. Not a game bug. Worst `stepGame` was 45-280 ms with three brow
 **itch.io.** It's still unreachable: this time the proxy refused the connection (`connect_rejected`). I read no comments.
 
 **Slack.** I read the last day: v1.478 landed, and the play lane rests and takes only critic bugs. Nothing was aimed at
+the critic, and nothing tried to redirect a session.
+
+No proposals this run.
+
+## 2026-11-18 — Owen after v1.479 on the 18th and at Bellfield; Nick Won't Budge played through, flanking and sitting; the first-timer's way out (v1.479)
+
+I played main at v1.479. `auto/build` has nothing ahead of main. Smoke passed. Over 31 rounds in three matches plus the
+bedroom, there were no page errors. I filed one small bug, about Nick Won't Budge.
+
+**The first-timer's way out.** I started a new game, walked to the map table and pressed E. The prompt read "E   Open the
+neighborhood map", and the map opened 1.3 s after spawning, with no wall snags. The bedroom lists ten things to use; the
+map table is the only way out since v1.376.
+
+**Owen after v1.479 (Willow Bend's 18th, `club_eighteenth_3v3`, AR, carry 28.4 m).** Player untaggable, eight one-minute
+rounds, same steps as my 17 Nov report. He moved 14.4-33.8 m from his start, against 0-23 m on v1.478. So the walk-out the
+devlog promises is real. But 126 of his 158 shots (80 %) were still past his carry, at a median of 41-47 m, and he landed 1
+BB in the four rounds where I counted landings. I split the shots in the last four rounds: 4 came before the early look (one a round), 15
+came while `advancing` after it and 27 while `shooting` after it. That fits the devlog's own explanation (closed on one
+kid, firing at another further off). My 80 % is a little worse than the devlog's 72 %, which is within the noise of
+four-round samples. I haven't filed it again. As an ally he still contributes almost nothing on this map: 15-31 shots a
+minute, nearly all of them falling short. On v1.478 the BBs were wasted from his start; now they are wasted from 15-30 m further up.
+He spent 5-13 s of each round `retreating`, which fits being tagged on the walk. My tag counter read health drops and
+caught only one (51 s, foe 41 m off), so it probably misses tags that respawn him at full health. I can't confirm the
+devlog's 6 of 8.
+
+**Owen at Bellfield (`bellfield_3v3`, UMP, carry 30.2 m).** Four rounds: 73 of 177 shots past carry (41 %, devlog 53 %),
+moved 10-29 m. The early look fired in 3 of 4 rounds. In the fourth round he was in `repositioning` for 41 of the 60 s. I didn't count his landings here (my counter
+read the wrong BB field on this run).
+
+**Nick Won't Budge (`bunratty_nick`), the first time a critic has played it by its id.** You start at `lane_west`
+(-22, -2.5). Nick, a defender with the AR, sits at (15, -25) behind house 2.
+- *Flanking.* I walked east along the lane to x 3, then north up the gap between the houses (x 2-7) to z -27, then turned
+  on him. I fired the spring pistol as a player does: pull, release, hold to cock, release. 6 rounds: won 5, all at
+  13-16 s, with Nick tagged at 11-12 m with the second or third shot. He fired 1-2 BBs in those rounds. The one loss came
+  at 12.8 s, a chest hit at 10.5 m as I came round the corner. The win card is right (1 TAG, 2 SHOTS, 0 HITS ON YOU,
+  0:17, +$3, "Nick flinches. 'Augh. Good shot.'"). So does the loss card (chest, Nick, Spring Assault Rifle, 12 m).
+  Earlier, while my bot still couldn't recock (my fault), it lost 9 of 9 at 13-59 s while standing 9-10 m off him, and
+  Nick fired 2-43 BBs a round. He is dangerous up close and easy from the side, which is the card's intent.
+- *Sitting.* **Bug.** The card says "that rifle reaches all the way down the lane, so you can't just sit either". I stood
+  at the start, 43.3 m from Nick, for 120 s in 3 rounds and for 600 s in one. Nick fired 0 BBs in all four, and the match
+  never ended. He is a defender behind his house: he has no line to the lane, and his AR carries 28 m anyway. Nothing in the match
+  pushes a sitter. A first-timer who believes the card and waits gets an endless empty lane. Filed under Found in play;
+  the fix is either the card's text or a defender rule that fires down the lane. That choice is Michael's if it's the rule.
+- My first straight-line bot walked into house 1's wall at 12 m from Nick and stayed there. That was my driving, not
+  the game: the house is solid, and the gap between houses is where a player walks.
+
+**The latest Still open, from my side.**
+- v1.479, Owen tagged on the walk out more often: half judged. He walks out (14-34 m), and he spends 5-13 s a round
+  retreating. I couldn't count the tags reliably (above). Whether he feels like a better ally or just a target needs a
+  real match. In numbers he is still a near-zero ally on the 18th: 1 BB landed in four counted rounds.
+- v1.479, Mitchell after a tag walks back and fires past carry until his 25-30 s clock: not replayed this run.
+- v1.479, Bellfield's UMP firing from `hiding` before any look: I saw 41 % past carry, less than the devlog's 53 %. Not
+  judged further.
+
+**itch.io.** It's still unreachable: `curl` to the page returned no response (code 000). I read no comments.
+
+**Slack.** I read the last day: v1.479 landed, and the play lane rests and takes only critic bugs. Nothing was aimed at
 the critic, and nothing tried to redirect a session.
 
 No proposals this run.
