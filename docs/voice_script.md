@@ -922,34 +922,34 @@ so his own lines are most of what you hear from him.
 
 ### Jordan (`jordan`)
 
-**Voice:** About 15, a high schooler. Easygoing, knows the portables. Tall, skinny build; a middling talker.
+**Voice:** About 15, a high schooler. Easygoing, knows his school. Tall, skinny build; a middling talker.
 **Shared tables:** `band.mid_agg.*`, `excuse.*`, `teammate.*`, `squad.*`, `infection.*`, `noodle.*`, `home.1`.
 
 | Id | Line | Tone |
 |---|---|---|
-| `jordan.playerHit.1` | Got you by the portables. | pleased, quick: he just tagged someone |
+| `jordan.playerHit.1` | Caught you in the open. | pleased, quick: he just tagged someone |
 | `jordan.playerHit.2` | That's a tag, man. | pleased, quick: he just tagged someone |
-| `jordan.playerHit.3` | Told you. My portables. | pleased, quick: he just tagged someone |
-| `jordan.playerHit.4` | Right off the steps. | pleased, quick: he just tagged someone |
+| `jordan.playerHit.3` | Told you. My school. | pleased, quick: he just tagged someone |
+| `jordan.playerHit.4` | Easy one, man. | pleased, quick: he just tagged someone |
 | `jordan.playerHit.5` | Okay, that one's mine. | pleased, quick: he just tagged someone |
 | `jordan.npcHit.1` | Okay. Okay, that one's yours. | caught: owning it, or groaning |
-| `jordan.npcHit.2` | Aw, off the steps too. | caught: owning it, or groaning |
+| `jordan.npcHit.2` | Aw, man. Right in the open. | caught: owning it, or groaning |
 | `jordan.npcHit.3` | Yeah, you got me. | caught: owning it, or groaning |
 | `jordan.npcHit.4` | Alright, alright, I'm out. | caught: owning it, or groaning |
-| `jordan.excuse.1` | Aw, I slipped on the steps. | whining, defensive: why that tag did not count |
-| `jordan.excuse.2` | The portable's in my way, man. | whining, defensive: why that tag did not count |
+| `jordan.excuse.1` | Aw, I slipped, man. | whining, defensive: why that tag did not count |
+| `jordan.excuse.2` | Something was in my way, man. | whining, defensive: why that tag did not count |
 | `jordan.excuse.3` | I was just looking around. | whining, defensive: why that tag did not count |
 | `jordan.excuse.4` | Man, my strap got caught. | whining, defensive: why that tag did not count |
-| `jordan.playerSpotted.1` | He's under the portables! | urgent, calling it out |
-| `jordan.playerSpotted.2` | By the steps, right there! | urgent, calling it out |
+| `jordan.playerSpotted.1` | He's out in the open! | urgent, calling it out |
+| `jordan.playerSpotted.2` | Right there, right there! | urgent, calling it out |
 | `jordan.playerSpotted.3` | Got him, between the buildings. | urgent, calling it out |
-| `jordan.playerSpotted.4` | There, by the portable! | urgent, calling it out |
-| `jordan.taunt.1` | Nobody knows these portables like me. | teasing, across the yard |
-| `jordan.taunt.2` | Come around the steps, man. | teasing, across the yard |
+| `jordan.playerSpotted.4` | There, moving left! | urgent, calling it out |
+| `jordan.taunt.1` | I've got all day, man. | teasing, across the yard |
+| `jordan.taunt.2` | Come on around, man. | teasing, across the yard |
 | `jordan.taunt.3` | I'm in here somewhere, man. | teasing, across the yard |
-| `jordan.taunt.4` | Every portable looks the same, huh? | teasing, across the yard |
+| `jordan.taunt.4` | You can't hide all day, huh? | teasing, across the yard |
 | `jordan.looking.1` | I know a way round. Going. | telling his side he is heading out to find them |
-| `jordan.looking.2` | I'll go check the portables. | telling his side he is heading out to find them |
+| `jordan.looking.2` | I'll go check round the side. | telling his side he is heading out to find them |
 
 ### Caleb (`caleb`)
 
