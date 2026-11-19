@@ -200,9 +200,15 @@ for (const [id, near] of [['winnmark_team_3v3', true], ['winnmark_team_3v3', fal
     // next free kid would be 40 m off): clear the cooldowns just before the hold lifts so the call itself is seen
     // v1.266 fix-up: up to 2.4 s on the round's clock, not 2.4 s from here (CI's slower BEGIN had the round at 0.18 s
     // already, so a fixed 2.4 s ran past the 2.5 s start call and the cooldowns were cleared too late)
+    // 19 Nov fix-up (CI and local red on main): cleared once at 2.4 s, a line in the last 0.1 s of the hold (the 6 m kid
+    // or an ally beside you spotting, 2.43-2.5 s) spent the 1.5 s global cooldown and held the call. From 2.4 s the
+    // cooldowns are cleared before every frame until the call is made, so the start call itself is what is seen.
     for (let f = 0; f < 60 * 3 && (Game.scenario.roundTime || 0) < 2.4 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
-    VOICE.globalCooldownUntil = 0; for (const e of Game.scenario.enemies) e._voiceCooldownUntil = 0;
-    for (let f = 0; f < 60 * 1.6 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
+    for (let f = 0; f < 60 && !Game.scenario._startCalled && Game.mode === 'scenario'; f++) {
+      VOICE.globalCooldownUntil = 0; for (const e of Game.scenario.enemies) e._voiceCooldownUntil = 0;
+      stepGame(1 / 60);
+    }
+    for (let f = 0; f < 60 * 1.5 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
     const starts = VOICE.log.filter(e => e.category === 'roundStart');
     return { before, nearest: hostile[0]?.charId, starts: starts.map(e => [e.t, e.charId, e.line]), first: VOICE.log[0] ? [VOICE.log[0].t, VOICE.log[0].charId, VOICE.log[0].category] : null, called: Game.scenario._startCalled };
   }, near);
