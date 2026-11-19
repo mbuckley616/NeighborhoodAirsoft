@@ -138,6 +138,26 @@ check('Nick Won\'t Budge: Nick has 40 s of patience and fires nothing at a sitte
 check('Nick Won\'t Budge: after 40-48 s quiet he walks out, and reaches his cover', nick.walkAt >= 40 && nick.walkAt <= 48 && nick.arrivedAt != null && nick.fromSpot < 4, nick);
 check('Nick Won\'t Budge: his cover is his spot now, inside what his AR carries to you', nick.anchorAtSpot && nick.endDist < nick.reach, nick);
 check('Nick Won\'t Budge: from there he shoots at you with a line', nick.lineShots >= 5 && nick.firstLineShot > nick.walkAt, nick);
+// v1.482 (critic, 19 Nov): seen from the gap mouth (2.7, -4.2) instead of the lane, his walk passed you at 7.8 m with a line
+// and he fired nothing until his spot 12 m beyond you (58 s). Now he stops where he has a line and his AR reaches you.
+await g.scenario('bunratty_nick');
+const gap = await page.evaluate(() => {
+  const n = Game.scenario.enemies.find(e => e.charId === 'nick'), P = Game.player.pos;
+  const r = { walkAt: null, firstShot: null, minLineD: 1e9 };
+  const sp = spawnEnemyBB;
+  window.spawnEnemyBB = (e, t) => { if (e === n && r.firstShot == null) r.firstShot = +Game.scenario.roundTime.toFixed(1); return sp(e, t); };
+  for (let f = 0; f < 65 * 60 && Game.mode === 'scenario'; f++) {
+    P.x = 2.7; P.z = -4.2;
+    stepGame(1 / 60);
+    if (r.walkAt == null && n._patGoal) r.walkAt = +Game.scenario.roundTime.toFixed(1);
+    if (r.walkAt != null && r.firstShot == null && n._hasLOSNow) r.minLineD = Math.min(r.minLineD, +Math.hypot(n.pos.x - P.x, n.pos.z - P.z).toFixed(1));
+  }
+  window.spawnEnemyBB = sp;
+  r.reach = +kidGunReach('ar').toFixed(1);
+  return r;
+});
+console.log('   Nick Won\'t Budge, sitting at the gap mouth:', JSON.stringify(gap));
+check('Nick Won\'t Budge, at the gap mouth: he walks out, stops inside his reach with a line and fires by 55 s, not past you', gap.walkAt != null && gap.firstShot != null && gap.firstShot < 55 && gap.minLineD >= 12 && gap.minLineD <= gap.reach, gap);
 const nickCard = await page.evaluate(() => SCENARIOS.bunratty_nick.desc);
 check('Nick Won\'t Budge: the card says you can\'t just sit', /can't just sit/.test(nickCard), nickCard);
 

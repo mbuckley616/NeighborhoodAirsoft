@@ -1096,6 +1096,7 @@ function updateKidPatience(e, dt) {
   const spot = kidPatienceSpot(e);
   if (!spot) return;
   e._patGoal = spot.pos;
+  e._patPast = spot.past;   // v1.482
   e._patF = kidFieldTo(spot.pos.x, spot.pos.z);
   e._patWalks = (e._patWalks || 0) + 1;
   e.deployTarget = spot.pos;
@@ -1124,7 +1125,8 @@ function kidPatienceSpot(e) {
     if (!(walk < Infinity) || (best && walk >= best.walk)) continue;
     const y = scenarioGroundY(p.x, p.z);
     if (aiSightY({ pos: { x: p.x, y, z: p.z }, mesh: e.mesh }, v) == null) continue;
-    best = { pos: new THREE.Vector3(p.x, 0, p.z), walk, dFoe };
+    // v1.482: `past`, a spot farther from him than you are: he would walk past you to get there
+    best = { pos: new THREE.Vector3(p.x, 0, p.z), walk, dFoe, past: Math.hypot(p.x - e.pos.x, p.z - e.pos.z) > Math.hypot(foe.pos.x - e.pos.x, foe.pos.z - e.pos.z) };
   }
   return best;
 }
@@ -1133,6 +1135,7 @@ function kidPatienceArrive(e) {
   e.deployTarget = null;
   e._patGoal = null;
   e._patF = null;
+  e._patPast = false;
 }
 
 function updateEnemies(dt) {
@@ -1736,7 +1739,13 @@ function updateEnemies(dt) {
           const losNow = aiSightY(e, tgt) != null;
           // v1.481: walking out of patience he goes on to his cover (Michael's B: "stops at the first cover from which his
           // AR reaches you"), unless you shoot at him on the way: then he takes the fight where he is, and that is his spot
-          const patFight = e._patGoal && e._lastNearMiss && aiNow() - e._lastNearMiss < PATIENCE_NEAR_MISS_S;
+          // v1.482 (critic, 19 Nov): only where he has a line to you and his gun reaches (less 4 m, as kidPatienceSpot), and,
+          // unless his spot lies past you, no nearer you than the spot would put him. From the gap mouth he walked past you
+          // at 7.8 m with a line and fired nothing until his spot 12 m beyond you; shot at with no line he stopped in his
+          // yard, ducked behind house 1 out of sight and sat out another 40 s
+          const patD = Math.hypot(tgt.pos.x - e.pos.x, tgt.pos.z - e.pos.z);
+          const patFight = e._patGoal && losNow && patD <= kidGunReach(e.weapon) - 4 &&
+            (e._patPast || patD <= Math.hypot(tgt.pos.x - e._patGoal.x, tgt.pos.z - e._patGoal.z) + 0.5);
           if (patFight) kidPatienceArrive(e);
           if (losNow && (patFight || (!e._patGoal && inFullRange))) {
             e.state = 'hiding';
