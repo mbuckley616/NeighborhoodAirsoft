@@ -290,6 +290,7 @@ function enterScenario(scenarioId) {
         if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
         if (es.holdUntilNear) enemy.holdUntilNear = es.holdUntilNear;   // v1.316: no shot until a teammate is this close to you
         if (es.holdNear) enemy.holdNear = es.holdNear;                  // v1.429: holds his spot until a foe is this close to it
+        if (es.patience) enemy.patience = es.patience;                  // v1.481: walks out to reach you after this many quiet seconds
         // v1.431: a scenario's `enemyHoldNear` gives every kid of their side the same hold, the crew's fills included (the
         // night match on Northcliff Trace at real scale: Haden, filling Mason's side, came down the west leg into a 54-57 m
         // line from your crew's AK on the straight)

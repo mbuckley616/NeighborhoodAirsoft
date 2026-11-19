@@ -648,16 +648,18 @@ const SCENARIOS = {
   // to move and flank, exactly what he taunts you about.
   // v1.480 (critic, 18 Nov): from the lane_west start he has no line and his AR carries ~28 m of the 43 m, so a
   // sitter draws nothing and the match waits; the card no longer says his rifle reaches down the lane.
+  // v1.481 (decisions, Michael: B, 19 Nov): after 40 s with no line and no BB near him (`patience`), he walks out to the
+  // nearest cover from which his AR sees and reaches you, and holds there; the card says so.
   bunratty_nick: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: "Nick Won't Budge",
-    desc: "Nick's posted up in his backyard with the AR and no intention of moving. He won't chase and he won't come looking: if you want him, you have to go to him. Get round the houses and flank him. \"You gotta keep moving, dude.\"",
+    desc: "Nick's posted up in his backyard with the AR and no intention of moving. He won't chase you through the houses, but he won't wait forever either: sit tight and he walks out to where that rifle reaches you, so you can't just sit. Get round the houses and flank him. \"You gotta keep moving, dude.\"",
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
     playerSpawn: 'lane_west',
     enemySetup: [
-      { charId: 'nick', weapon: 'ar', anchor: 'house2_backyard', role: 'defender' },
+      { charId: 'nick', weapon: 'ar', anchor: 'house2_backyard', role: 'defender', patience: 40 },   // v1.481: walks out after 40 s quiet
     ],
     winCondition: 'kill_all',
     rewards: { win: 24, lose: 7 },

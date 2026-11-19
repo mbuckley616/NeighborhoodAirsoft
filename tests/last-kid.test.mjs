@@ -103,5 +103,43 @@ console.log('  the clock, Jamie alone:', JSON.stringify(unit));
 check('the clock: not bored at 24 s, bored at 26 s and advancing', !unit.at24 && unit.at26 && unit.state === 'advancing', unit);
 check('the clock: a shot with a line settles him and restarts it', unit.afterShot === false && unit.t === 0, unit);
 
+// v1.481 (decisions, Michael: B on "Nick Won't Budge: a player who sits"): Nick (a defender, AR) held his yard behind
+// house 2, 43 m from the lane start and out of sight, and a player who sat there drew nothing (600 s, the critic). Now
+// after 40 s with no line and no BB near him he walks out to the nearest cover from which his AR sees and reaches you,
+// and holds there. Here the player sits untaggable at the start and never fires.
+await g.scenario('bunratty_nick');
+const nick = await page.evaluate(() => {
+  const n = Game.scenario.enemies.find(e => e.charId === 'nick'), P = Game.player.pos;
+  const r = { patience: n.patience, shotsBefore40: 0, lineShots: 0, walkAt: null, spot: null, arrivedAt: null, firstLineShot: null };
+  const sp = spawnEnemyBB;
+  window.spawnEnemyBB = (e, t) => {
+    if (e === n) {
+      if (Game.scenario.roundTime < 40) r.shotsBefore40++;
+      if (e._hasLOSNow) { r.lineShots++; if (r.firstLineShot == null) r.firstLineShot = +Game.scenario.roundTime.toFixed(1); }
+    }
+    return sp(e, t);
+  };
+  for (let f = 0; f < 75 * 60 && Game.mode === 'scenario'; f++) {
+    stepGame(1 / 60);
+    if (r.walkAt == null && n._patGoal) { r.walkAt = +Game.scenario.roundTime.toFixed(1); r.spot = { x: n._patGoal.x, z: n._patGoal.z }; }
+    if (r.walkAt != null && r.arrivedAt == null && !n._patGoal) r.arrivedAt = +Game.scenario.roundTime.toFixed(1);
+  }
+  window.spawnEnemyBB = sp;
+  r.mode = Game.mode;
+  r.reach = +kidGunReach('ar').toFixed(1);
+  r.endDist = +Math.hypot(n.pos.x - P.x, n.pos.z - P.z).toFixed(1);
+  r.fromSpot = r.spot ? +Math.hypot(n.pos.x - r.spot.x, n.pos.z - r.spot.z).toFixed(1) : null;
+  r.anchorAtSpot = r.spot ? Math.hypot(n.anchorPos.x - r.spot.x, n.anchorPos.z - r.spot.z) < 2.5 : false;
+  r.state = n.state;
+  return r;
+});
+console.log('   Nick Won\'t Budge, sitting at the start:', JSON.stringify(nick));
+check('Nick Won\'t Budge: Nick has 40 s of patience and fires nothing at a sitter before it runs out', nick.patience === 40 && nick.shotsBefore40 === 0, nick);
+check('Nick Won\'t Budge: after 40-48 s quiet he walks out, and reaches his cover', nick.walkAt >= 40 && nick.walkAt <= 48 && nick.arrivedAt != null && nick.fromSpot < 4, nick);
+check('Nick Won\'t Budge: his cover is his spot now, inside what his AR carries to you', nick.anchorAtSpot && nick.endDist < nick.reach, nick);
+check('Nick Won\'t Budge: from there he shoots at you with a line', nick.lineShots >= 5 && nick.firstLineShot > nick.walkAt, nick);
+const nickCard = await page.evaluate(() => SCENARIOS.bunratty_nick.desc);
+check('Nick Won\'t Budge: the card says you can\'t just sit', /can't just sit/.test(nickCard), nickCard);
+
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
