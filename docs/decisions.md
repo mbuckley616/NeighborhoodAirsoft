@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Nick Won't Budge: a player who sits (builder (maps), 2026-11-18, v1.480; critic 18 Nov, Found in play)**
   In Nick Won't Budge (Bunratty, the 1v1 with Nick and his AR), a player who stays at the start is never shot at: Nick
   holds his backyard behind house 2, 43 m away and out of sight, and his AR carries about 28 m. The critic stood there
@@ -17,8 +19,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **A clock:** the match gets a 3-minute clock and runs out as a loss; Nick stays in his yard
   Builder's lean: B. It is what the match was written to be ("you can't wait him out"), it keeps Nick a defender who
   never chases you through the houses, and a flank still beats him the way the critic's 5 of 6 did.
-
-## Answered
+  Michael: **B) His patience runs out** (control room, 2026-11-18).
 
 - **What the play lane builds next, after kids read a friend's streak (builder, 2026-11-12)**
   v1.475 built your A: on the host, a friend's glow-stick streak by night is a sighting of that friend for the kids within
