@@ -60,14 +60,17 @@ for (let i = 0; i < 2; i++) {
     const start = { x: kid.pos.x, z: kid.pos.z };
     VOICE.log = [];   // v1.467: this round's lines only (the log runs on across rounds)
     let lookAt = null, sawFirst = null, t = 0, at15 = 0, from = null, voiceClear = false;
-    for (let f = 0; f < 60 * 15 && Game.mode === 'scenario'; f++) {
+    // tests fix-up (19 Nov, CI red on main): the round's clock, not frames counted here. The page runs real frames between
+    // g.scenario() and this loop (2 s here, alone), so a look at round time 8.0 read as 6.0-6.1 on the local count.
+    const rt = () => Game.scenario.roundTime || 0;
+    for (let f = 0; f < 60 * 20 && Game.mode === 'scenario' && rt() < 15; f++) {
       const before = kid.state;
       // v1.478 fix-up: whether the voices were ever clear for him in his 6 s (other kids' lines hold the global cooldown;
       // a round where they held it the whole window, to 16.3 s, failed here on the old build too, 2 of 10). Read before
       // the step: a line said in it sets the cooldowns again.
       const now = (Game.scenario.roundTime || 0) + 1 / 30;   // the step's voiceStep reads the clock a frame on
       if (lookAt != null && t <= lookAt + 6 && now >= (VOICE.globalCooldownUntil || 0) && !(kid._voiceCooldownUntil > now)) voiceClear = true;
-      stepGame(1 / 60); t += 1 / 60;
+      stepGame(1 / 60); t = rt();
       if (sawFirst == null && kid._inReachNow) sawFirst = t;
       if (lookAt == null && kid._earlyLook) { lookAt = t; from = before; }
     }
