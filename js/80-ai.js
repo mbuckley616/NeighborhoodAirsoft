@@ -1079,6 +1079,62 @@ function kidLadderStep(e, tgt, dt) {
   return true;
 }
 
+// v1.481 (decisions, Michael: B on "Nick Won't Budge: a player who sits", 19 Nov): a kid whose enemySetup entry has
+// `patience` (seconds) and who goes that long with no foe in sight and no BB near him walks out from his spot, by the
+// route grid, to the nearest cover (by the walk) from which he can see his foe and his gun reaches, and holds there as his
+// new spot. Nick (a defender, AR) held his yard behind house 2, 43 m from the lane and out of sight, and a player who sat
+// at the start drew nothing for 600 s while the match never ended. He still never chases: from the new spot he plays the
+// defender as before, and if you move out of his reach and sit again, the clock runs again.
+const PATIENCE_NEAR_MISS_S = 1;
+function updateKidPatience(e, dt) {
+  if (!e.patience || e.health <= 0 || e.state === 'retreating' || e.state === 'deploying' || inOpeningHold()) { if (e.health <= 0 || e.state === 'retreating') { e._patT = 0; e._patGoal = null; e._patF = null; } return; }
+  const now = aiNow();
+  if (e._hasLOSNow || (e._lastNearMiss && now - e._lastNearMiss < PATIENCE_NEAR_MISS_S)) { e._patT = 0; return; }
+  e._patT = (e._patT || 0) + dt;
+  if (e._patT < e.patience) return;
+  e._patT = 0;
+  const spot = kidPatienceSpot(e);
+  if (!spot) return;
+  e._patGoal = spot.pos;
+  e._patF = kidFieldTo(spot.pos.x, spot.pos.z);
+  e._patWalks = (e._patWalks || 0) + 1;
+  e.deployTarget = spot.pos;
+  e.deployDelay = 0;
+  e.state = 'deploying';
+  e.stateTime = 0;
+  tryNpcSpeak(e, 'taunt');
+}
+// the cover stand nearest e by the walk from which a foe is in sight and inside his gun's reach (less 4 m, so his BBs
+// land rather than drop at the edge of their carry); null when there is none
+function kidPatienceSpot(e) {
+  const foes = opposingCombatants(e);
+  if (!foes.length) return null;
+  let foe = foes[0];
+  for (const c of foes) if (Math.hypot(c.pos.x - e.pos.x, c.pos.z - e.pos.z) < Math.hypot(foe.pos.x - e.pos.x, foe.pos.z - e.pos.z)) foe = c;
+  const v = combatantView(foe), reach = kidGunReach(e.weapon) - 4;
+  const F = kidFieldTo(e.pos.x, e.pos.z), c = LADDER_CELL;
+  let best = null;
+  for (const cov of (Game.scenario.cover || [])) {
+    const p = coverStandPos(cov, foe.pos);
+    const dFoe = Math.hypot(p.x - foe.pos.x, p.z - foe.pos.z);
+    if (dFoe > reach || dFoe < 6) continue;
+    const i = Math.round((p.x - F.b.minX) / c), k = Math.round((p.z - F.b.minZ) / c);
+    if (i < 0 || k < 0 || i >= F.nx || k >= F.nz) continue;
+    const walk = F.dist[i * F.nz + k];
+    if (!(walk < Infinity) || (best && walk >= best.walk)) continue;
+    const y = scenarioGroundY(p.x, p.z);
+    if (aiSightY({ pos: { x: p.x, y, z: p.z }, mesh: e.mesh }, v) == null) continue;
+    best = { pos: new THREE.Vector3(p.x, 0, p.z), walk, dFoe };
+  }
+  return best;
+}
+function kidPatienceArrive(e) {
+  e.anchorPos = new THREE.Vector3(e.pos.x, e.anchorPos ? e.anchorPos.y : 0, e.pos.z);
+  e.deployTarget = null;
+  e._patGoal = null;
+  e._patF = null;
+}
+
 function updateEnemies(dt) {
   // v1.121: a clock for the kids' progress windows (scenario time, counted here)
   Game.scenario.aiClock = (Game.scenario.aiClock || 0) + dt;
@@ -1558,6 +1614,7 @@ function updateEnemies(dt) {
     // line on his target for 25-30 s gets bored: a taunt, and he marches like a skirmisher (the `hiding` case below)
     // until he next fires with a line. Snipers, defenders, taggers and defend or timer rounds are left as they were.
     updateKidBoredom(e, dt);
+    updateKidPatience(e, dt);   // v1.481: a defender with `patience` walks out to where his gun reaches you
 
     // v1.9: shotgun kids want to *push closer* if the player is past their near range.
     // We achieve this through repositioning bias below (target cover that's closer to
@@ -1677,7 +1734,11 @@ function updateEnemies(dt) {
         {
           // v1.180: from his real height, as the shot itself (was the perch or 0); v1.385 (B.20): a head over a wall counts
           const losNow = aiSightY(e, tgt) != null;
-          if (losNow && inFullRange) {
+          // v1.481: walking out of patience he goes on to his cover (Michael's B: "stops at the first cover from which his
+          // AR reaches you"), unless you shoot at him on the way: then he takes the fight where he is, and that is his spot
+          const patFight = e._patGoal && e._lastNearMiss && aiNow() - e._lastNearMiss < PATIENCE_NEAR_MISS_S;
+          if (patFight) kidPatienceArrive(e);
+          if (losNow && (patFight || (!e._patGoal && inFullRange))) {
             e.state = 'hiding';
             e.stateTime = 0;
             e.nextStateChange = 0.3 + gameRandom() * 0.3;
@@ -1692,6 +1753,7 @@ function updateEnemies(dt) {
         }
         if (dd < 1.6) {
           // Arrived at fighting position → settle into normal behavior.
+          if (e._patGoal) kidPatienceArrive(e);   // v1.481: the cover he walked out to is his spot now
           e.state = 'hiding';
           e.stateTime = 0;
           e.nextStateChange = 0.4 + gameRandom() * 0.6;
@@ -1705,8 +1767,11 @@ function updateEnemies(dt) {
         // reactive-bail above kicks them straight into the fight, so a kid still
         // working around a house never reads as "stuck" for long.
         const deploySpeed = 2.6 * (ch.moveSpeed ?? 1.0);
-        const stepX = (dxd / dd) * deploySpeed * dt;
-        const stepZ = (dzd / dd) * deploySpeed * dt;
+        // v1.481: walking out of patience, by the kids' route grid (round the houses), not straight at the spot
+        const pw = e._patF ? kidFieldNext(e._patF, e.pos.x, e.pos.z) : null;
+        const sx = pw ? pw.x - e.pos.x : dxd, sz = pw ? pw.z - e.pos.z : dzd, sl = Math.hypot(sx, sz) || 1;
+        const stepX = (sx / sl) * deploySpeed * dt;
+        const stepZ = (sz / sl) * deploySpeed * dt;
         const kidRadius = 0.35;
         const nX = e.pos.x + stepX, nZ = e.pos.z + stepZ;
         const beforeDX = e.pos.x, beforeDZ = e.pos.z;
@@ -1753,6 +1818,8 @@ function updateEnemies(dt) {
           // pushing on: on Northcliff at night Haden, boxed in 3 m short of his spot in their base, was handed to
           // 'advancing', walked down the west leg and drew a 55-57 m first shot from your crew on the straight
           if (e.holdNear && !e._holdFree) { e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 0.4 + gameRandom() * 0.6; break; }
+          // v1.481: a defender walking out of patience who wedges holds where he is (a defender never chases)
+          if (e._patGoal) { kidPatienceArrive(e); e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 0.4 + gameRandom() * 0.6; break; }
           e.state = 'advancing';
           e.stateTime = 0;
           e.advanceCheckTimer = 0;
