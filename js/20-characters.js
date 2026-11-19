@@ -256,7 +256,7 @@ const CHARACTERS = {
     height: 'tall', build: 'skinny', hairStyle: 'wavy', glasses: false,
     hairColor: 0x1a1410, skinColor: 0x8a5a3a, shirtColor: 0x7a2a2a, pantsColor: 0x6a6048,
     aggression: 0.5, fireRate: 1.0, accuracy: 0.6, headshotBias: 0.15, hp: 1, moveSpeed: 1.1,
-    flavor: { hit: '"Okay. Okay, that one\'s yours."', win: 'Jordan leans on the portable steps. "Told you. My portables."' },
+    flavor: { hit: '"Okay. Okay, that one\'s yours."', win: 'Jordan leans on the wall, grinning. "Told you. My school."' },   // v1.483: was the portable steps; After the Bell plays at the front since v1.453
   },
   caleb: {
     name: 'Caleb', neighborhood: 'east_roswell', street: 'hollins_ridge_high',
@@ -509,12 +509,13 @@ const VOICE_LINES = {
     taunt:         ["I'm coming right at you!", "Run, dude, run!", "Can't hide from me!", "Diego would've ran already!"],
   },
   // v1.229: Hollins Ridge High's six (v1.190) came after the v1.150 tables; their own lines, from their flavor.
-  // Jordan: easygoing, knows the portables.
+  // Jordan: easygoing, knows his school. v1.483 (critic, 19 Nov): his lines no longer name the portables or their steps;
+  // his match, After the Bell, plays at the front entrance and the east lot since v1.453, and he fills crews elsewhere.
   jordan: {
-    playerHit:     ["Got you by the portables.", "That's a tag, man.", "Told you. My portables.", "Right off the steps.", "Okay, that one's mine."],
-    npcHit:        ["Okay. Okay, that one's yours.", "Aw, off the steps too.", "Yeah, you got me.", "Alright, alright, I'm out."],
-    playerSpotted: ["He's under the portables!", "By the steps, right there!", "Got him, between the buildings.", "There, by the portable!"],
-    taunt:         ["Nobody knows these portables like me.", "Come around the steps, man.", "I'm in here somewhere, man.", "Every portable looks the same, huh?"],
+    playerHit:     ["Caught you in the open.", "That's a tag, man.", "Told you. My school.", "Easy one, man.", "Okay, that one's mine."],
+    npcHit:        ["Okay. Okay, that one's yours.", "Aw, man. Right in the open.", "Yeah, you got me.", "Alright, alright, I'm out."],
+    playerSpotted: ["He's out in the open!", "Right there, right there!", "Got him, between the buildings.", "There, moving left!"],
+    taunt:         ["I've got all day, man.", "Come on around, man.", "I'm in here somewhere, man.", "You can't hide all day, huh?"],
   },
   // Caleb: fast, pushy, always nearly made it.
   caleb: {
@@ -636,7 +637,7 @@ const VOICE_EXCUSES_OWN = {
   fernando:  ["Diego was supposed to watch that side.", "Diego, why'd you move?", "My goggles fogged up.", "I was signaling Diego."],
   diego:     ["Fernando gave me away.", "Fernando was too loud.", "My mag was half empty anyway.", "Hm. Fernando's fault."],
   colin:     ["Seth said you'd be left!", "My gun's way slower than yours!", "My goggles slid down, dude!", "No fair, I was gonna win!"],
-  jordan:    ["Aw, I slipped on the steps.", "The portable's in my way, man.", "I was just looking around.", "Man, my strap got caught."],
+  jordan:    ["Aw, I slipped, man.", "Something was in my way, man.", "I was just looking around.", "Man, my strap got caught."],   // v1.483: no steps, no portable
   caleb:     ["One more step and I had you!", "I was RIGHT there, though!", "I tripped over the hose!", "I was almost there! Doesn't count!"],
   nathan:    ["My glasses fogged under the goggles.", "Statistically, that shouldn't have hit.", "You weren't supposed to go there.", "My glasses slipped."],
   sophie:    ["Ugh, my gun pulls left.", "My hair got in my eyes.", "Lucky. Won't happen again.", "I was lining up a better shot."],
@@ -737,7 +738,7 @@ const VOICE_LOOKING_OWN = {
   fernando:  ["Diego, I'm going up.", "I'll go look. Diego, stay here."],
   diego:     ["Fernando, I'm moving.", "Hm. Going for a look."],
   colin:     ["I'm going! Straight at 'em!", "Can't see 'em! Running up!"],
-  jordan:    ["I know a way round. Going.", "I'll go check the portables."],
+  jordan:    ["I know a way round. Going.", "I'll go check round the side."],   // v1.483: was the portables
   caleb:     ["I'm going up! Almost there!", "Pushing up! Watch me!"],
   nathan:    ["They should be ahead. Moving up.", "I've worked out where they are. Going."],
   sophie:    ["I'll go round the end.", "Moving up. I'll find a shot."],

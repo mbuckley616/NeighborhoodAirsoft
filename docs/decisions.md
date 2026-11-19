@@ -5,6 +5,15 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Nick Won't Budge: when he takes cover after his walk (play builder, 2026-11-19, v1.482; critic 19 Nov, Found in play)**
+  Nick now stops where his AR reaches you and fires (v1.482). But shoot at him there and he does what every kid does under
+  fire in the open: he runs to the nearest cover that shields him, which on Bunratty is back in his yard behind the
+  houses, out of sight. Then your 40 s rule ("no shot either way") starts again, so a player who stays put waits about
+  40 s more before he walks out a second time (the critic saw 92 s).
+  A) Keep it: 40 s each time; ducking out of sight under fire is fair play
+  B) After his first walk-out his clock is 15 s, so he comes back soon after the shooting stops _(recommended)_
+  C) After his first walk-out he only takes cover from which he still sees you (he may stand in the open instead)
+
 ## Answered
 
 - **Nick Won't Budge: a player who sits (builder (maps), 2026-11-18, v1.480; critic 18 Nov, Found in play)**

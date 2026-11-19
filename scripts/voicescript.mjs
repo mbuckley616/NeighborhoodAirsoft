@@ -41,7 +41,7 @@ export const VOICE_BRIEFS = {
   fernando:  'About 12. One of a pair with Diego: careful, gives the signals.',
   diego:     'About 12. One of a pair with Fernando: cool and short, “tch”.',
   colin:     'About 11. Seth’s crew: loud, fast, always running straight at you.',
-  jordan:    'About 15, a high schooler. Easygoing, knows the portables.',
+  jordan:    'About 15, a high schooler. Easygoing, knows his school.',
   caleb:     'About 15, a high schooler. Fast and pushy, always nearly made it.',
   nathan:    'About 15, a high schooler with glasses. Patient, has worked out where you’ll go.',
   sophie:    'About 15, a high schooler. The best shot at the school: cool, confident.',
