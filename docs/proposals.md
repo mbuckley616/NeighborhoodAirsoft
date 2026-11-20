@@ -155,3 +155,22 @@ play on lap two.
 could make it a coin flip. Coming back once, at 20 m, keeps it short of that.
 **Recommendation.** Do it after the result-card fix (Found in play). It is small and turns the ride's second minute from
 dead time into the match.
+
+## 2026-11-20 — A kid's sniper wobbles past 20 m (v1.483)
+**Why.** In Trey on Overwatch, Trey's spring sniper hit a standing player 19 of 21 times at 32.7 m, and a crouched one
+15-17 of 21 at 26.6 m. Walking the street, his first BB tagged me at 3.2 s from about 44 m in 2 of 4 rounds (critic,
+20 Nov). Fernando did the same in the day pickup game (15 of 15 at 20-25 m, 13 Oct), and v1.207 took his rifle away
+rather than touch it. The brief's pillar is "unreliable BBs: reliable inside ~10 m, increasingly random beyond". The
+player's own BBs wobble with range, but a kid's aim noise in `spawnEnemyBB` is a fixed cone that doesn't grow with
+distance, so the sniper, the gun with the smallest cone, is near-certain wherever he can see you. A one-life match
+against a sniper then turns on whether you step into his line, not on the BB's luck.
+**What.** Past about 20 m, a kid's aim cone widens with distance (snipers too), so Trey lands maybe 40-60 % at 33 m and
+still about every shot inside 15 m. The other guns are mostly short of their carry at that range already, so they
+barely change.
+**Cost.** One function in `76-bbs` (`spawnEnemyBB`'s spread), play lane, one session. Re-measure the sniper matches
+(Overwatch, Storm the Cul-de-Sac, Two in the Yards, Whole Block, the night 4v4s). `pickup-fernando` and
+`car-side-fire` lean on hit counts and may need their lines moved.
+**Risk.** Sniper matches get easier, and a few of their tests were tuned to today's numbers. Michael may want snipers
+to be the one sure gun, the kid with the expensive rifle. Then the fix is per-match (Trey's spot), not per-gun.
+**Recommendation.** Yes, for snipers at least. It's the brief's own gimmick, and a kid's rifle should miss at 33 m
+sometimes.
