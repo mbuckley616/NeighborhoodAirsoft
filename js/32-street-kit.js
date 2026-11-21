@@ -1316,6 +1316,7 @@ function addHomeDepotBox(scene, x, z, opts = {}) {
   const group = new THREE.Group();
   group.position.set(x, 0, z);
   group.rotation.y = facing;
+  group.userData.cardboardBox = true;   // v1.488 (D.96): a snow block in winter, one BBs can knock down
 
   if (opts.detail) { buildBoxDetail(group, { w, h, d, cardboardMat, orangeMat, whiteMat }); scene.add(group); return { minX: x - hx, maxX: x + hx, minZ: z - hz, maxZ: z + hz, h, mesh: group, surface: 'soft' }; }   // v1.115 (Winnmark); v1.217: the turned box's bounds
   const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cardboardMat);

@@ -26,6 +26,25 @@ const drift = () => page.evaluate(() => {
   out.wind = Season.wind ? +Season.wind.accel.toFixed(2) + '@' + Math.atan2(Season.wind.z, Season.wind.x).toFixed(2) : null;
   return out;
 });
+const shootBlock = (n) => page.evaluate((n) => {
+  const o = Game.player.obstacles.find(o => o.snowFort && o.snowFort.stage < 2) || Game.player.obstacles.find(o => o.mesh && o.mesh.userData && o.mesh.userData.cardboardBox);
+  if (!o) return null;
+  for (const e of Game.scenario.enemies) e._graceT = 99;
+  const cx = (o.minX + o.maxX) / 2, cz = (o.minZ + o.maxZ) / 2, y = (o.baseY || 0) + Math.min(0.4, o.h * 0.4);
+  const from = new THREE.Vector3(cx - ((o.maxX - o.minX) / 2 + 1.2), y, cz);
+  let swallowed = 0;
+  for (let k = 0; k < n; k++) {
+    const bb = makeBB(from.clone(), new THREE.Vector3(30, 0, 0), 'enemy', null, null, 'enemy');
+    bb.curveStrength = 0;
+    Game.scenario.bbs.push(bb);
+    const before = o.snowFort ? o.snowFort.hits : 0;
+    for (let s = 0; s < 60 && Game.scenario.bbs.includes(bb); s++) updateBBs(1 / 200);
+    if (o.snowFort && o.snowFort.hits > before) swallowed++;
+    const i = Game.scenario.bbs.indexOf(bb); if (i >= 0) Game.scenario.bbs.splice(i, 1);
+  }
+  return { snow: !!o.snowFort, surface: o.surface, hits: o.snowFort ? o.snowFort.hits : 0, swallowed, h: +o.h.toFixed(3), h0: o.snowFort ? +o.snowFort.h0.toFixed(3) : +o.h.toFixed(3),
+    inObstacles: Game.player.obstacles.includes(o), inCover: (Game.scenario.cover || []).includes(o), visible: o.mesh.visible, scaleY: o.mesh.scale.y };
+}, n);
 // walk forward for 1 s from the start; metres covered
 const walk = () => page.evaluate(() => {
   const p0 = Game.player.pos.clone();
@@ -39,6 +58,8 @@ await g.scenario('winnmark_team_2v3');
 const wSummer = await drift();
 const sSummer = await page.evaluate(() => Season.moveMult);
 const vSummer = await walk();
+const fortsSummer = await page.evaluate(() => Game.player.obstacles.filter(o => o.mesh && o.mesh.userData && o.mesh.userData.cardboardBox).map(o => o.surface).join());
+const boxSummer = await shootBlock(20);
 await g.scenario('fall_wk_wingman');
 const wFall = await drift();
 // the same match's wind every time, and a fall night calm (the weather as enterScenario sets it, without a map)
@@ -106,5 +127,18 @@ console.log('   ' + JSON.stringify(tags));
 check('the cards: WINDY on a fall day, HALLOWEEN on Halloween Night, DEEP SNOW in winter, nothing new in the summer', /WINDY/.test(tags.fall) && !/WINDY/.test(tags.night) && /HALLOWEEN/.test(tags.night) && /DEEP SNOW/.test(tags.winter) && !/WINDY|SNOW|HALLOWEEN/.test(tags.summer), tags);
 check('the briefing says it: winter, deep snow, slower, tracks', /WINTER · DEEP SNOW/.test(tags.brief), tags.brief);
 
+// v1.488 (D.96 step 4): snow forts. In winter every cardboard box is a snow block; BBs from either side knock it down:
+// slumped to 55% at 15 hits, gone from the obstacles and the cover at 30. In the summer the boxes are cardboard as before.
+// (the winter match is still on from the prints above)
+const nForts = await page.evaluate(() => ({ forts: Game.scene.userData.season.forts, snow: Game.player.obstacles.filter(o => o.snowFort).length }));
+const b14 = await shootBlock(14);
+const b15 = await shootBlock(1);
+const b30 = await shootBlock(15);
+console.log('   ' + JSON.stringify({ fortsSummer, boxSummer, nForts, b14, b15, b30 }));
+check('the summer\'s boxes are cardboard and take no hits', /soft/.test(fortsSummer) && !/snow/.test(fortsSummer) && boxSummer && !boxSummer.snow && boxSummer.inObstacles, { fortsSummer, boxSummer });
+check('winter: every box on the map is a snow block', nForts.forts > 0 && nForts.snow === nForts.forts, nForts);
+check('a snow block stands through 14 hits, every BB swallowed', b14.snow && b14.swallowed === 14 && b14.h === b14.h0 && b14.inObstacles, b14);
+check('the 15th hit slumps it to 55%: still there, lower', b15.hits === 15 && Math.abs(b15.h - b15.h0 * 0.55) < 0.005 && b15.scaleY === 0.55 && b15.inObstacles && b15.inCover, b15);
+check('the 30th knocks it down: gone from the obstacles and the cover, and out of sight', b30.hits === 30 && !b30.inObstacles && !b30.inCover && !b30.visible, b30);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

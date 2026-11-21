@@ -144,6 +144,8 @@ function updateBBs(dt) {
         const oBase = o.baseY ?? 0;
         if (bb.pos.y > oBase && bb.pos.y < oBase + (o.h || 5) &&
             obsOverlapsXZ(o, bb.pos.x, bb.pos.z, 0)) {
+          // v1.488 (D.96): a snow block in winter swallows the BB and takes the hit (63-seasons)
+          if (o.snowFort && seasonSnowHit(o, bb)) { bbWhistleStop(bb); removed = true; break; }
 
           // Outcome probabilities per surface (must sum to 1).
           // v1.16: BBs only STICK to soft surfaces (cardboard). Hard plastic bins

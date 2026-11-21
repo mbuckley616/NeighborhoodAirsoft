@@ -129,7 +129,8 @@ function applySeasonLook(built, season, timeOfDay, matchId) {
   }
   seasonSky(scene, season, timeOfDay);
   const fx = seasonParticles(scene, season, timeOfDay);
-  const info = { season, mats, verts, particles: fx ? fx.count : 0 };
+  const forts = season === 'winter' ? seasonSnowForts(built) : 0;   // v1.488: the boxes are snow blocks
+  const info = { season, mats, verts, particles: fx ? fx.count : 0, forts };
   scene.userData.season = info;
   return info;
 }
@@ -420,19 +421,6 @@ function seasonTrailFor(e, ref) {
   }
   return near ? newest : null;
 }
-// The briefing's line for a season match: the season and what its weather does
-function seasonBriefTag(sc) {
-  if (sc.season === 'fall') return sc.timeOfDay === 'night' ? '🍂 FALL' : '🍂 FALL · WINDY: LONG SHOTS DRIFT';
-  if (sc.season === 'winter') return '❄ WINTER · DEEP SNOW: EVERYONE SLOWER, AND YOU LEAVE TRACKS';
-  return '';
-}
-
-// The briefing's line for a season match: the season and what its weather does
-function seasonBriefTag(sc) {
-  if (sc.season === 'fall') return sc.timeOfDay === 'night' ? '🍂 FALL' : '🍂 FALL · WINDY: LONG SHOTS DRIFT';
-  if (sc.season === 'winter') return '❄ WINTER · DEEP SNOW: EVERYONE SLOWER, AND YOU LEAVE TRACKS';
-  return '';
-}
 
 // ----------------------------------------------------------------------
 // v1.488 (D.96 step 4, Michael: B, "snow forts can be knocked down"): in winter every cardboard box on the map
@@ -484,4 +472,10 @@ function seasonSnowPuff(at) {   // (each fleck its own geometry: updateFragments
     Game.scene.add(mesh);
     Game.scenario.fragments.push({ mesh, vel: new THREE.Vector3((Math.random() - 0.5) * 2, 1 + Math.random() * 1.5, (Math.random() - 0.5) * 2), age: 0, lifetime: 0.8 });
   }
+}
+// The briefing's line for a season match: the season and what its weather does
+function seasonBriefTag(sc) {
+  if (sc.season === 'fall') return sc.timeOfDay === 'night' ? '🍂 FALL' : '🍂 FALL · WINDY: LONG SHOTS DRIFT';
+  if (sc.season === 'winter') return '❄ WINTER · DEEP SNOW: EVERYONE SLOWER, AND YOU LEAVE TRACKS';
+  return '';
 }
