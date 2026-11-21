@@ -35,6 +35,11 @@ function seasonColor(color, role, season, out) {
   const green = h >= 0.17 && h <= 0.47 && s > 0.1 && l > 0.04 && l < 0.85;
   const dirt = role === 'ground' && h >= 0.04 && h < 0.17 && s > 0.08 && s < 0.6 && l > 0.12 && l < 0.6;
   const v = seasonHash(color.getHex());
+  if (role === 'roof') {                          // v1.489: snow lying on a roof, a little greyer than the ground's
+    if (green) return false;
+    out.setHSL(0.6, 0.1, 0.8 + 0.06 * v);
+    return true;
+  }
   if (role === 'pine') {                          // a pine keeps its needles: green in fall, dark or frosted in winter
     if (!green || season !== 'winter') return false;
     if (v < 0.3) out.setHSL(0.55, 0.08, 0.78 + 0.08 * v);
@@ -75,6 +80,24 @@ function seasonRole(mesh, box, size) {
   if (mesh.geometry && mesh.geometry.type === 'ConeGeometry') return 'pine';
   return 'leaf';
 }
+// v1.489 (D.96 step 5): a roof, for the winter's snow: a mesh up off the ground (its lowest point over 2.2 m) that faces
+// the sky: most of its vertices are on sloped or flat faces (either way up: a double-sided roof may be wound down), as a hip or gable roof's are,
+// or a wide flat slab (a flat roof). Its colour must not be a green (a tree's crown is not a roof).
+const _roofHSL = { h: 0, s: 0, l: 0 };
+function seasonIsRoof(mesh, box, size) {
+  if (box.min.y < 2.2) return false;
+  const m0 = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+  if (!m0 || !m0.color || m0.type === 'MeshBasicMaterial' || m0.transparent || m0.vertexColors) return false;
+  m0.color.getHSL(_roofHSL);
+  if (_roofHSL.h >= 0.17 && _roofHSL.h <= 0.47 && _roofHSL.s > 0.1) return false;
+  const g = mesh.geometry;
+  if (g && g.type === 'BoxGeometry') return size.y < 0.8 && size.x * size.z > 6;
+  const n = g && g.attributes && g.attributes.normal;
+  if (!n || n.count < 3 || size.x * size.z < 4) return false;   // roof-sized, not a lamp's head
+  let up = 0;   // a sloped or flat face either way up (a double-sided roof can be wound facing down)
+  for (let i = 0; i < n.count; i++) if (Math.abs(n.getY(i)) > 0.25) up++;
+  return up >= 0.45 * n.count;   // a house kit's gables and porch roofs are about half sloped faces
+}
 // The pass over a built map. `built` is a scene builder's result; `timeOfDay` is 'day' or 'night'.
 function applySeasonLook(built, season, timeOfDay, matchId) {
   Season.now = season || null;
@@ -86,7 +109,7 @@ function applySeasonLook(built, season, timeOfDay, matchId) {
   for (const e of (built.enemies || [])) if (e.mesh && e.mesh.group) skip.add(e.mesh.group);
   const matMemo = new Map(), geoMemo = new Map();
   const box = new THREE.Box3(), size = new THREE.Vector3(), tmp = new THREE.Color();
-  let mats = 0, verts = 0;
+  let mats = 0, verts = 0, roofs = 0;
   const meshes = [];
   scene.traverse(o => {
     if (!o.isMesh || o.isInstancedMesh) return;
@@ -96,7 +119,8 @@ function applySeasonLook(built, season, timeOfDay, matchId) {
   scene.updateMatrixWorld(true);
   for (const o of meshes) {
     box.setFromObject(o); box.getSize(size);
-    const role = seasonRole(o, box, size);
+    let role = seasonRole(o, box, size);
+    if (season === 'winter' && role !== 'ground' && seasonIsRoof(o, box, size)) role = 'roof';   // v1.489: snow on the roofs
     // the material: a recoloured copy, one per material and role
     const swap = m => {
       if (!m || !m.color || m.type === 'MeshBasicMaterial') return m;
@@ -108,6 +132,7 @@ function applySeasonLook(built, season, timeOfDay, matchId) {
       return out;
     };
     o.material = Array.isArray(o.material) ? o.material.map(swap) : swap(o.material);
+    if (role === 'roof') roofs++;
     // vertex colours: a recoloured copy of the geometry; a vertex on a flat, upward face is ground
     const g = o.geometry, col = g && g.attributes && g.attributes.color;
     const usesVC = col && (Array.isArray(o.material) ? o.material.some(m => m && m.vertexColors) : o.material && o.material.vertexColors);
@@ -130,7 +155,8 @@ function applySeasonLook(built, season, timeOfDay, matchId) {
   seasonSky(scene, season, timeOfDay);
   const fx = seasonParticles(scene, season, timeOfDay);
   const forts = season === 'winter' ? seasonSnowForts(built) : 0;   // v1.488: the boxes are snow blocks
-  const info = { season, mats, verts, particles: fx ? fx.count : 0, forts };
+  const xmas = season === 'winter' ? addChristmasLights(built, timeOfDay) : null;   // v1.489: Christmas week's lights
+  const info = { season, mats, verts, particles: fx ? fx.count : 0, forts, roofs, christmas: xmas ? xmas.userData.christmas.bulbs : 0 };
   scene.userData.season = info;
   return info;
 }
@@ -267,15 +293,15 @@ const SEASON_CHAPTERS = [
         desc: "It actually snowed. Not much, but enough. Nick's with you against Sean's side, before it melts." },
       { id: 'winter_bn_storm', base: 'bunratty_storm_the_court', scenarioName: 'Storm the Snowy Court',
         desc: "Mitchell's side have dug in at the cul-de-sac. Go take it. Stay off the ice on the driveways." },
-      { id: 'winter_bn_crew', base: 'bunratty_team_4v4', scenarioName: 'Christmas Break',
+      { id: 'winter_bn_crew', base: 'bunratty_team_4v4', scenarioName: 'Christmas Break', holiday: 'christmas',
         desc: "No school for two weeks. Mitchell's whole crew is out in their new coats, and so is yours." },
     ] },
     { key: 'winter_northcliff', pin: 'northcliff', name: "Northcliff / Martin's Landing", region: 'northcliff', when: 'Christmas week', matches: [
-      { id: 'winter_bf_bulb', base: 'bellfield_3v3', scenarioName: 'Bellfield in the Snow',
+      { id: 'winter_bf_bulb', base: 'bellfield_3v3', scenarioName: 'Bellfield in the Snow', holiday: 'christmas',
         desc: "Andrew and Evan are with you on Bellfield against Christian's side. The bulb's white over and every yard has lights up." },
-      { id: 'winter_bf_fort', base: 'bellfield_defend_fort', scenarioName: 'Hold the Snow Fort',
+      { id: 'winter_bf_fort', base: 'bellfield_defend_fort', scenarioName: 'Hold the Snow Fort', holiday: 'christmas',
         desc: "The bulb fort's got a foot of snow on it now. Hold it against Mason's crew until the timer's done." },
-      { id: 'winter_bf_lamplight', base: 'bellfield_night_4v4', scenarioName: 'Lamplight in the Snow',
+      { id: 'winter_bf_lamplight', base: 'bellfield_night_4v4', scenarioName: 'Lamplight in the Snow', holiday: 'christmas',
         desc: "Teams on Bellfield after dark, the streetlamps on the snow. Haden, Connor and Evan have your back." },
     ] },
     { key: 'winter_market', pin: 'market_lot', name: 'Riverside Market', region: 'east_roswell', when: 'January', matches: [
@@ -478,4 +504,247 @@ function seasonBriefTag(sc) {
   if (sc.season === 'fall') return sc.timeOfDay === 'night' ? '🍂 FALL' : '🍂 FALL · WINDY: LONG SHOTS DRIFT';
   if (sc.season === 'winter') return '❄ WINTER · DEEP SNOW: EVERYONE SLOWER, AND YOU LEAVE TRACKS';
   return '';
+}
+
+// ----------------------------------------------------------------------
+// v1.489 (D.96 step 5): the kids dress for the season. In fall every kid in a match, both sides, wears long sleeves to
+// the wrist and long trousers (shorts are put away), with a hood down his back. In winter he also wears a knit beanie
+// (unless he has a hat of his own), a scarf and gloves, the beanie, scarf and gloves in one colour picked by his name,
+// so the same kid wears the same ones every match. The sleeves and the hood are his shirt's colour, so a crew jersey's
+// sleeves stay the crew's and you can still tell the sides. All looks: the beanie lowers with his head (headExtras),
+// the rest rides the torso and the arms, and nothing changes a hitbox.
+// ----------------------------------------------------------------------
+const SEASON_KNITS = [0xb8322c, 0x2c3e6a, 0x2f5a3a, 0xc9a032, 0x6a6a70, 0x5a3a7a, 0xd06a2a, 0x3a7a8a];
+function seasonDressKid(kid, key, season, p) {
+  if (!kid || !season || kid.seasonDress || !kid.pose) return null;
+  const po = kid.pose, box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const sleeveMat = po.rigR.upper.material;   // the shirt, or the crew jersey's colour
+  // long sleeves down the forearms, as a hoodie's (v1.198), where he has bare forearms
+  for (const rig of [po.rigR, po.rigL]) {
+    if (rig.fore.children.some(c => c.userData.kidSleeve)) continue;
+    const sl = new THREE.Mesh(box(0.108, 0.19, 0.123), sleeveMat);
+    sl.position.set(0, 0.01, 0); sl.castShadow = true; sl.userData.kidSleeve = 'season'; rig.fore.add(sl);
+  }
+  // long trousers: the shorts go and the bare leg takes his trousers' colour
+  if (kid.shorts) {
+    for (const s of kid.shorts) s.visible = false;
+    const pants = new THREE.MeshStandardMaterial({ color: (p && p.pantsColor) || 0x3d4f6e, roughness: 0.85 });
+    po.legL.material = pants; po.legR.material = pants;
+  }
+  // the hood, down his back (under a costume's cape there is none)
+  if (!kid.costume || !kid.costume.body) {
+    const hood = new THREE.Mesh(box(0.27, 0.11, 0.07), sleeveMat);
+    hood.position.set(0, 0.24, -0.14); hood.rotation.x = 0.25; hood.castShadow = true; hood.userData.seasonHood = true;
+    kid.torso.add(hood);
+  }
+  const out = { season, hood: true, sleeves: true, beanie: null, scarf: null };
+  if (season === 'winter') {
+    const knit = SEASON_KNITS[_hashStringToSeed('knit|' + key) % SEASON_KNITS.length];
+    const knitMat = _kidFaceMat('seasonKnit', knit, 0.95);
+    const rib = _kidFaceMat('seasonKnitRib', new THREE.Color(knit).multiplyScalar(0.75).getHex(), 0.95);
+    // the beanie over the hair (a hat of his own stays, and so does a costume's)
+    const ownHat = (kid.hat && !kid.hat.userData.crewBandana) || (kid.costume && kid.costume.head);
+    if (!ownHat) {
+      const g = new THREE.Group(); g.userData.seasonBeanie = true;
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), knitMat);
+      crown.scale.set(1.08, 0.78, 1.1); crown.position.set(0, 1.39, -0.005); crown.castShadow = true; g.add(crown);
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.212, 0.212, 0.06, 14), rib);
+      cuff.scale.set(1.04, 1, 1.06); cuff.position.set(0, 1.405, -0.005); g.add(cuff);
+      const pom = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), rib);
+      pom.position.set(0, 1.56, -0.005); g.add(pom);
+      if (p && p.hairStyle === 'curly') for (const e of po.headExtras) if (e.mesh !== kid.hat) e.mesh.visible = false;   // the puffs go under it
+      kid.group.add(g);
+      po.headExtras.push({ mesh: g, baseY: g.position.y });
+      kid.seasonBeanie = g; out.beanie = g;
+    }
+    // the scarf round his neck, one end hanging down his front
+    const scarf = new THREE.Group(); scarf.userData.seasonScarf = true;
+    const ring = new THREE.Mesh(box(0.3, 0.07, 0.28), knitMat); ring.position.set(0, 0.275, 0); scarf.add(ring);
+    const tail = new THREE.Mesh(box(0.08, 0.24, 0.025), knitMat); tail.position.set(0.075, 0.13, 0.15); tail.rotation.z = 0.06; scarf.add(tail);
+    const fringe = new THREE.Mesh(box(0.08, 0.025, 0.027), rib); fringe.position.set(0.082, 0.0, 0.15); scarf.add(fringe);
+    scarf.traverse(m => { if (m.isMesh) m.castShadow = true; });
+    kid.torso.add(scarf); out.scarf = scarf;
+    // gloves
+    const glove = _kidFaceMat('seasonGlove', new THREE.Color(knit).multiplyScalar(0.6).getHex(), 0.95);
+    po.handL.material = glove; po.handR.material = glove;
+    out.gloves = true;
+  }
+  kid.seasonDress = out;
+  return out;
+}
+
+// ----------------------------------------------------------------------
+// v1.489 (D.96 step 5): Christmas lights. The winter's Christmas matches (Christmas Break on Bunratty and the three on
+// Bellfield in Christmas week, `holiday: 'christmas'`) string coloured bulbs along every house's front eaves and hang a
+// wreath on its door, at the same spots Halloween uses (`holidayFront`, a door marker's web corners). The bulbs glow at
+// night and are paler by day. Nothing is solid; it is two merged meshes for the whole map. Halloween's decor and
+// costumes read only 'halloween', so they stay away.
+// ----------------------------------------------------------------------
+const XMAS_BULBS = [0xff3b30, 0x2fd158, 0x3a7bff, 0xffc83a, 0xff8a2a];
+function addChristmasLights(built, timeOfDay) {
+  if (!built || !built.scene || holidayNow() !== 'christmas') return null;
+  const night = timeOfDay === 'night';
+  const houses = [];
+  built.scene.updateMatrixWorld(true);
+  built.scene.traverse(o => { if (o.userData && o.userData.holidayFront) houses.push(o); });
+  if (!houses.length) return null;
+  const bulbs = [], wreaths = [];
+  const bulbGeo = new THREE.SphereGeometry(0.045, 6, 4), wire = new THREE.BoxGeometry(1, 1, 1);
+  const ring = new THREE.TorusGeometry(0.22, 0.07, 6, 14), bow = new THREE.BoxGeometry(0.16, 0.08, 0.04);
+  const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
+  const at = (hm, x, y, z, yaw, sx, sy, sz) => { Q.setFromAxisAngle(Y, yaw); return new THREE.Matrix4().multiplyMatrices(hm, M.compose(V.set(x, y, z), Q, Sc.set(sx, sy, sz))); };
+  const dim = night ? 1 : 0.62, WIRE = new THREE.Color(0x1f2a1f);
+  let n = 0;
+  houses.forEach((h, hi) => {
+    const f = h.userData.holidayFront, hm = h.matrixWorld;
+    const rx = -f.fz, rz = f.fx, yaw = Math.atan2(f.fx, f.fz);
+    const P = (along, out, y) => [f.fx * (f.d + out) + rx * along, y, f.fz * (f.d + out) + rz * along];
+    // the eaves line: a marker's two web corners, or the house's front from corner to corner under its eaves
+    const ends = f.webs && f.webs.length >= 2 ? [P(f.webs[0][0], f.webs[0][1], f.webs[0][2] + 0.1), P(f.webs[1][0], f.webs[1][1], f.webs[1][2] + 0.1)]
+      : [P(-f.half, 0.12, f.h - 0.06), P(f.half, 0.12, f.h - 0.06)];
+    const [a, b] = ends, len = Math.hypot(b[0] - a[0], b[2] - a[2]);
+    if (len < 1) return;
+    const count = Math.max(4, Math.floor(len / 0.3));
+    for (let i = 0; i <= count; i++) {
+      const t = i / count, sag = 0.09 * Math.sin(Math.PI * ((t * len / 1.5) % 1));   // it dips between hooks every 1.5 m
+      const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t - sag - 0.05, z = a[2] + (b[2] - a[2]) * t;
+      const c = new THREE.Color(XMAS_BULBS[(i + hi) % XMAS_BULBS.length]).multiplyScalar(dim);
+      bulbs.push({ geo: bulbGeo.clone(), m: at(hm, x, y, z, yaw, 1, 1.3, 1), c });
+      n++;
+    }
+    // the wire, one thin piece along the line
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2 - 0.02, mz = (a[2] + b[2]) / 2;
+    bulbs.push({ geo: wire.clone(), m: at(hm, mx, my, mz, yaw, len, 0.012, 0.012), c: WIRE });
+    // the wreath on the door, at 1.75 m (a marker's y is its threshold)
+    const [wx, , wz] = P(0, 0.05, 0);
+    wreaths.push({ geo: ring.clone(), m: at(hm, wx, 1.75, wz, yaw, 1, 1, 1), c: new THREE.Color(0x1f5a2a) });
+    wreaths.push({ geo: bow.clone(), m: at(hm, wx, 1.55, wz + 0.0, yaw, 1, 1, 1), c: new THREE.Color(0xc0262a) });
+  });
+  if (!bulbs.length) return null;
+  const group = new THREE.Group(); group.name = 'christmasLights'; group.userData.noSeason = true;
+  const lit = new THREE.Mesh(holidayMerge(bulbs), new THREE.MeshBasicMaterial({ vertexColors: true }));
+  lit.name = 'bulbs'; lit.matrixAutoUpdate = false; group.add(lit);
+  if (wreaths.length) {
+    const w = new THREE.Mesh(holidayMerge(wreaths), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 }));
+    w.name = 'wreaths'; w.matrixAutoUpdate = false; group.add(w);
+  }
+  group.userData.christmas = { houses: houses.length, bulbs: n };
+  built.scene.add(group);
+  return group;
+}
+
+// ----------------------------------------------------------------------
+// v1.490 (D.96 step 6): the bedroom calendar past August. Once the Last Saturday is won the calendar on the wall turns
+// to the season you are in: Fall 2003 (September and October, a picture of orange trees) or Winter 2003-04 (December,
+// January and February, a snowy one). Each place has its days (SEASON_CAL); the date inside a place moves with the
+// share of its matches you have won, as the summer's does, and its finale is its last day: Halloween Night on 31
+// October, Snow Day on Friday 20 February. The summer's own calendar, its day count, the texts and the rival's days are
+// unchanged; this only takes over the page and the view once the fall is open.
+// ----------------------------------------------------------------------
+const SEASON_CAL = {   // zone key → [year, month (0-11), first date, last date]
+  fall_winnmark: [2003, 8, 6, 20], fall_hollow: [2003, 8, 21, 30], fall_school: [2003, 9, 1, 18], fall_bunratty: [2003, 9, 19, 31],
+  winter_bunratty: [2003, 11, 6, 19], winter_northcliff: [2003, 11, 20, 31], winter_market: [2004, 0, 3, 31], winter_winnmark: [2004, 1, 1, 20],
+};
+const SEASON_CAL_MONTHS = { fall: [[2003, 8], [2003, 9]], winter: [[2003, 11], [2004, 0], [2004, 1]] };
+const SEASON_MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// Where the year is: null in the summer (the Last Saturday not won); else the season, its place and today's date
+function seasonCalendarNow() {
+  if (!Game.persist.completed[SUMMER_FINALE]) return null;
+  let zone = null;
+  for (const z of SEASON_ZONES) if (isZoneUnlocked(z.key)) zone = z;
+  if (!zone || !SEASON_CAL[zone.key]) return null;
+  const [year, month, first, last] = SEASON_CAL[zone.key];
+  const ids = PIN_SCENARIO_GROUPS[zone.key] || [];
+  const done = ids.filter(id => Game.persist.completed[id]).length;
+  const date = done >= ids.length ? last : Math.min(last, first + Math.floor((last - first + 1) * done / Math.max(1, ids.length)));
+  const weekday = SUMMER_WEEKDAYS[new Date(year, month, date).getDay()];
+  return { season: zone.season, zone, year, month, date, weekday, label: `${weekday} ${date} ${SEASON_MONTH_NAMES[month]}`,
+    yearWon: !!Game.persist.completed['winter_wk_snow_day'] };
+}
+// Is a day (year, month, date) before, on or after today
+function _seasonCmp(y, m, d, t) { return (y - t.year) * 400 + (m - t.month) * 32 + (d - t.date); }
+// The place whose days hold a date, in today's season
+function _seasonZoneOn(season, y, m, d) {
+  for (const z of SEASON_ZONES) {
+    const c = SEASON_CAL[z.key];
+    if (z.season === season && c && c[0] === y && c[1] === m && d >= c[2] && d <= c[3]) return z;
+  }
+  return null;
+}
+const _seasonPencil = name => name.split(' · ')[0].split(' /')[0].replace(/^The /, '');
+// The page on the wall: the season's picture, this month's grid, past days crossed out, today ringed
+function drawSeasonCalendar(canvas, t) {
+  const W = canvas.width, H = canvas.height, c = canvas.getContext('2d'), fall = t.season === 'fall';
+  c.fillStyle = '#f7f2e6'; c.fillRect(0, 0, W, H);
+  const ph = H * 0.38;
+  const sky = c.createLinearGradient(0, 0, 0, ph);
+  if (fall) { sky.addColorStop(0, '#6a9cc8'); sky.addColorStop(1, '#f0d6a8'); } else { sky.addColorStop(0, '#9aa8b8'); sky.addColorStop(1, '#e4e8ee'); }
+  c.fillStyle = sky; c.fillRect(0, 0, W, ph);
+  c.fillStyle = fall ? '#c8a050' : '#f4f6fa'; c.fillRect(0, ph * 0.72, W, ph * 0.28);   // straw, or snow
+  for (const [x, s, k] of [[0.08, 1, 0], [0.2, 1.3, 1], [0.32, 0.9, 2], [0.7, 1.2, 1], [0.84, 1, 0], [0.95, 1.4, 2]]) {
+    c.fillStyle = '#5a4030'; c.fillRect(W * x - 3, ph * 0.62, 6, ph * 0.18);   // a trunk
+    if (fall) {
+      c.fillStyle = ['#d8661a', '#c8341e', '#e0a020'][k];
+      c.beginPath(); c.arc(W * x, ph * (0.58 - 0.12 * s), 24 * s, 0, Math.PI * 2); c.fill();
+    } else {
+      c.fillStyle = '#2f4a3a';
+      c.beginPath(); c.moveTo(W * x, ph * (0.78 - 0.45 * s)); c.lineTo(W * x - 26 * s, ph * 0.8); c.lineTo(W * x + 26 * s, ph * 0.8); c.fill();
+      c.fillStyle = '#f4f6fa';
+      c.beginPath(); c.moveTo(W * x, ph * (0.78 - 0.45 * s)); c.lineTo(W * x - 10 * s, ph * (0.78 - 0.27 * s)); c.lineTo(W * x + 10 * s, ph * (0.78 - 0.27 * s)); c.fill();
+    }
+  }
+  c.fillStyle = fall ? '#e0781e' : '#ffffff';   // a few leaves, or snowflakes, in the air
+  for (let i = 0; i < 26; i++) { const px = (i * 97) % W, py = (i * 53) % (ph * 0.7); c.fillRect(px, py, fall ? 5 : 3, fall ? 3 : 3); }
+  c.fillStyle = '#fff'; c.font = 'bold 34px Impact, sans-serif'; c.textAlign = 'center';
+  c.fillText(fall ? 'FALL 2003' : 'WINTER 2003-04', W / 2, ph * 0.2);
+  c.fillStyle = '#b02a24'; c.font = 'bold 40px Georgia, serif';
+  c.fillText(SEASON_MONTH_NAMES[t.month].toUpperCase(), W / 2, ph + 50);
+  const days = new Date(t.year, t.month + 1, 0).getDate(), firstDow = new Date(t.year, t.month, 1).getDay();
+  const gx = 16, gy = ph + 72, cw = (W - 32) / 7, rows = 6, ch = (H - gy - 12) / rows;
+  c.font = 'bold 15px Arial, sans-serif'; c.fillStyle = '#555';
+  'SMTWTFS'.split('').forEach((d, i) => c.fillText(d, gx + cw * (i + 0.5), gy - 6));
+  for (let d = 1; d <= days; d++) {
+    const slot = firstDow + d - 1, x = gx + cw * (slot % 7), y = gy + ch * Math.floor(slot / 7);
+    c.strokeStyle = '#c9c0ae'; c.lineWidth = 1; c.strokeRect(x, y, cw, ch);
+    c.fillStyle = '#333'; c.font = '18px Arial, sans-serif'; c.textAlign = 'left';
+    c.fillText(String(d), x + 5, y + 19);
+    const z = _seasonZoneOn(t.season, t.year, t.month, d);
+    if (z && SEASON_CAL[z.key][2] === d) {
+      c.fillStyle = '#4a5a8a'; c.font = 'italic 11px Arial, sans-serif';
+      c.fillText(_seasonPencil(z.name).slice(0, 12), x + 3, y + ch - 6);
+    }
+    const cmp = _seasonCmp(t.year, t.month, d, t);
+    if (cmp < 0) {
+      c.strokeStyle = '#c0302a'; c.lineWidth = 3;
+      c.beginPath(); c.moveTo(x + 6, y + 6); c.lineTo(x + cw - 6, y + ch - 6);
+      c.moveTo(x + cw - 6, y + 6); c.lineTo(x + 6, y + ch - 6); c.stroke();
+    } else if (cmp === 0) {
+      c.strokeStyle = '#1f5fb0'; c.lineWidth = 3;
+      c.beginPath(); c.ellipse(x + cw / 2, y + ch / 2, cw / 2 - 3, ch / 2 - 3, 0, 0, Math.PI * 2); c.stroke();
+    }
+  }
+  c.textAlign = 'left';
+}
+// The view it opens: the season's months, today ringed, the days at the place you are in shaded, and each place's dates
+function seasonCalendarHTML(t) {
+  const months = SEASON_CAL_MONTHS[t.season].map(([y, m]) => {
+    const days = new Date(y, m + 1, 0).getDate(), firstDow = new Date(y, m, 1).getDay();
+    let cells = '';
+    for (let i = 0; i < firstDow; i++) cells += '<span class="sm-day blank"></span>';
+    for (let d = 1; d <= days; d++) {
+      const cmp = _seasonCmp(y, m, d, t), z = _seasonZoneOn(t.season, y, m, d);
+      const cls = ['sm-day', cmp < 0 ? 'past' : '', cmp === 0 ? 'today' : '', z && z.key === t.zone.key ? 'here' : ''].filter(Boolean).join(' ');
+      cells += `<span class="${cls}" title="${z ? _seasonPencil(z.name) : ''}">${d}</span>`;
+    }
+    return `<div class="sm-month"><div class="sm-name">${SEASON_MONTH_NAMES[m]} ${y}</div>
+      <div class="sm-grid">${'SMTWTFS'.split('').map(w => `<span class="sm-dow">${w}</span>`).join('')}${cells}</div></div>`;
+  }).join('');
+  const places = SEASON_ZONES.filter(z => z.season === t.season).map(z => {
+    const [y, m, a, b] = SEASON_CAL[z.key];
+    return `${_seasonPencil(z.name)} ${a}–${b} ${SEASON_MONTH_NAMES[m].slice(0, 3)}`;
+  }).join(' · ');
+  const end = t.season === 'fall' ? 'Halloween Night ends the fall.' : (t.yearWon ? 'Snow Day is won: the year is won.' : 'Snow Day ends the winter.');
+  return `<div class="sm-today">Today is <b>${t.label}</b>, at ${_seasonPencil(t.zone.name)}.</div>
+    <div class="sm-months">${months}</div>
+    <div class="sm-note">${places}. ${end}</div>`;
 }

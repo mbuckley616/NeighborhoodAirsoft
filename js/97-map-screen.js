@@ -47,6 +47,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
   if (sc.season === 'fall' && sc.timeOfDay !== 'night') badges.push('🍂 WINDY');   // v1.487 (D.96): long shots drift
   if (sc.season === 'winter') badges.push('❄ DEEP SNOW');           // v1.487: slower, and you leave tracks
   if (sc.season && sc.holiday === 'halloween') badges.push('🎃 HALLOWEEN');   // v1.487
+  if (sc.season && sc.holiday === 'christmas') badges.push('🎄 CHRISTMAS');   // v1.489: the lights are up
   if (sc.vip) badges.push('★ VIP');                               // v1.170
   if (sc.ctf) badges.push('⚑ FLAGS');                             // v1.189
   if (sc.timerSec && /survive/.test(sc.winCondition || '')) badges.push('⏱ ' + sc.timerSec + 's');

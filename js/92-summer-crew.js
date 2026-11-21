@@ -57,6 +57,8 @@ function summerZoneName(key) {
 }
 // The bedroom calendar's page: a picture on top, this month's grid below, past days crossed out, today ringed.
 function drawSummerCalendar(canvas, today) {
+  const season = seasonCalendarNow();   // v1.490 (D.96): past August the page turns to the fall or the winter
+  if (season) return drawSeasonCalendar(canvas, season);
   const W = canvas.width, H = canvas.height, c = canvas.getContext('2d');
   const t = summerDate(today), mo = SUMMER_MONTHS[t.month];
   c.fillStyle = '#f7f2e6'; c.fillRect(0, 0, W, H);
@@ -138,10 +140,11 @@ function openSummerCalendar() {
   Game.prevMode = Game.mode;
   Game.mode = 'modal';
   exitPointerLock();
-  document.getElementById('modalTitle').textContent = 'Summer ' + SUMMER_YEAR;
+  const season = seasonCalendarNow();   // v1.490 (D.96): the fall's or the winter's months once the summer is won
+  document.getElementById('modalTitle').textContent = season ? (season.season === 'fall' ? 'Fall 2003' : 'Winter 2003-04') : 'Summer ' + SUMMER_YEAR;
   const body = document.getElementById('modalBody');
   body.style.whiteSpace = 'normal';
-  body.innerHTML = summerCalendarHTML(summerDayIndex());
+  body.innerHTML = season ? seasonCalendarHTML(season) : summerCalendarHTML(summerDayIndex());
   document.querySelector('#modalScreen .modal-card').classList.add('wide');
   document.getElementById('modalScreen').classList.add('active');
 }

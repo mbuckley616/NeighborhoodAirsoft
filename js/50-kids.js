@@ -20,6 +20,7 @@ function addVipCap(kid, ours) {
   button.position.set(0, 0.22, -0.005); cap.add(button);
   cap.userData.vipCap = ours ? 'blue' : 'red';
   kid.head.add(cap);
+  if (kid.seasonBeanie) kid.seasonBeanie.visible = false;   // v1.489 (D.96): the VIP's cap goes on instead of his beanie
   kid.vipCap = cap;
   return cap;
 }
@@ -39,6 +40,7 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
   const kid = createKid(crewColor != null ? withKidJersey(ch, charId, crewColor) : ch, weapon);
   const costume = kidCostumeFor(charId);   // v1.351 (D.70 step 2): Halloween costumes, every match kid
   if (costume) addKidCostume(kid, costume, ch);
+  if (Season.now) seasonDressKid(kid, charId, Season.now, ch);   // v1.489 (D.96): sleeves and trousers in fall, a beanie, scarf and gloves in winter
   kid.group.position.copy(pos);
   scene.add(kid.group);
 
