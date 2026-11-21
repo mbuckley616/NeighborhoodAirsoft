@@ -314,6 +314,7 @@ function stepGame(dt) {
     }
     updateStuckBBs(dt);
     updateFragments(dt);
+    seasonStep(dt);   // v1.485 (D.96): the falling leaves or snow
     Game.scenario.roundTime = (Game.scenario.roundTime || 0) + dt;   // v1.101
     if (Game.player._graceT > 0) Game.player._graceT = Math.max(0, Game.player._graceT - dt);   // v1.170
     for (const k of Game.scenario.enemies) if (k._graceT > 0 && !k.remote) k._graceT = Math.max(0, k._graceT - dt);   // v1.291 (D.49)

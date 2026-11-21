@@ -811,6 +811,7 @@ function _buildPineDetail(scene, x, z, { trunkR, trunkH, leafR, baseY, leafColor
   const crown = new THREE.Mesh(_houseMergeParts(leaves), _plantMat(leafColor, true));
   crown.position.set(x, baseY + trunkH + leafR * 0.3, z);
   crown.castShadow = true;
+  crown.userData.seasonRole = 'pine';   // v1.485 (D.96): keeps its needles in fall
   scene.add(crown);
   trunk.userData.crown = crown;
   trunk.userData.loblolly = true;
@@ -1140,6 +1141,7 @@ function addCurbsideBin(scene, x, z, opts = {}) {
   const decalMat = new THREE.MeshStandardMaterial({ color: decalColor, roughness: 0.5 });
 
   const group = new THREE.Group();
+  group.userData.noSeason = true;   // v1.485 (D.96): keeps its paint in fall and winter
   // Bin body — slightly trapezoidal in real life; we use a simple tapered box look
   // by stacking two boxes (wider top, narrower bottom). The hard-plastic feel comes
   // from the lower roughness and the lid color contrast.
@@ -1610,6 +1612,7 @@ function addCar(scene, x, z, opts = {}) {
   const wheelR = 0.30;
 
   const group = new THREE.Group();
+  group.userData.noSeason = true;   // v1.485 (D.96): keeps its paint in fall and winter
   if (opts.detail) buildCarDetail(group, { carMat, winMat, len, width, wheelR, color });   // v1.112
   else {   // v1.112: the original box car (no map builds it since v1.126)
   // Body — sits with bottom at wheel-axle height
