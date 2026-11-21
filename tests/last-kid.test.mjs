@@ -158,6 +158,33 @@ const gap = await page.evaluate(() => {
 });
 console.log('   Nick Won\'t Budge, sitting at the gap mouth:', JSON.stringify(gap));
 check('Nick Won\'t Budge, at the gap mouth: he walks out, stops inside his reach with a line and fires by 55 s, not past you', gap.walkAt != null && gap.firstShot != null && gap.firstShot < 55 && gap.minLineD >= 12 && gap.minLineD <= gap.reach, gap);
+// v1.484 (decisions, Michael: B on "when he takes cover after his walk", 20 Nov): shot at where he stopped, he runs back
+// into his yard; after his first walk-out his clock is 15 s, not 40, so he walks out again soon after the shooting stops.
+await g.scenario('bunratty_nick');
+const back = await page.evaluate(() => {
+  const n = Game.scenario.enemies.find(e => e.charId === 'nick'), P = Game.player.pos;
+  const r = { walks: [], firstShot: null, lastMiss: null };
+  const sp = spawnEnemyBB;
+  window.spawnEnemyBB = (e, t) => { if (e === n && r.firstShot == null) r.firstShot = +Game.scenario.roundTime.toFixed(1); return sp(e, t); };
+  let had = false;
+  for (let f = 0; f < 80 * 60 && Game.mode === 'scenario'; f++) {
+    P.x = 2.7; P.z = -4.2;
+    const t = Game.scenario.roundTime;
+    if (r.firstShot != null && t > r.firstShot + 2 && t < r.firstShot + 6 && f % 15 === 0) {   // 4 s of near misses from you
+      n._lastNearMiss = aiNow(); r.lastMiss = +t.toFixed(1);
+      const d = Math.hypot(P.x - n.pos.x, P.z - n.pos.z) || 1;
+      n._incomingDir = { x: (P.x - n.pos.x) / d, z: (P.z - n.pos.z) / d };
+    }
+    stepGame(1 / 60);
+    if (n._patGoal && !had) r.walks.push(+Game.scenario.roundTime.toFixed(1));
+    had = !!n._patGoal;
+  }
+  window.spawnEnemyBB = sp;
+  r.gap = r.walks.length > 1 && r.lastMiss != null ? +(r.walks[1] - r.lastMiss).toFixed(1) : null;
+  return r;
+});
+console.log('   Nick Won\'t Budge, shot at after his walk:', JSON.stringify(back));
+check('Nick Won\'t Budge: shot at after his walk-out, he walks out again 15-20 s after the shooting stops, not 40', back.walks.length >= 2 && back.walks[0] >= 40 && back.gap >= 15 && back.gap <= 20, back);
 const nickCard = await page.evaluate(() => SCENARIOS.bunratty_nick.desc);
 check('Nick Won\'t Budge: the card says you can\'t just sit', /can't just sit/.test(nickCard), nickCard);
 

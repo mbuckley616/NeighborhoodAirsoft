@@ -1086,12 +1086,16 @@ function kidLadderStep(e, tgt, dt) {
 // at the start drew nothing for 600 s while the match never ended. He still never chases: from the new spot he plays the
 // defender as before, and if you move out of his reach and sit again, the clock runs again.
 const PATIENCE_NEAR_MISS_S = 1;
+// v1.484 (decisions, Michael: B on "Nick Won't Budge: when he takes cover after his walk", 20 Nov): shot at where he
+// stopped, he runs back to cover in his yard like any kid; after his first walk-out his clock is this, not his
+// `patience`, so he comes back soon after the shooting stops (the critic waited 92 s with 40 s each time).
+const PATIENCE_AFTER_WALK_S = 15;
 function updateKidPatience(e, dt) {
   if (!e.patience || e.health <= 0 || e.state === 'retreating' || e.state === 'deploying' || inOpeningHold()) { if (e.health <= 0 || e.state === 'retreating') { e._patT = 0; e._patGoal = null; e._patF = null; } return; }
   const now = aiNow();
   if (e._hasLOSNow || (e._lastNearMiss && now - e._lastNearMiss < PATIENCE_NEAR_MISS_S)) { e._patT = 0; return; }
   e._patT = (e._patT || 0) + dt;
-  if (e._patT < e.patience) return;
+  if (e._patT < (e._patWalks ? PATIENCE_AFTER_WALK_S : e.patience)) return;   // v1.484: 15 s once he has walked out
   e._patT = 0;
   const spot = kidPatienceSpot(e);
   if (!spot) return;
