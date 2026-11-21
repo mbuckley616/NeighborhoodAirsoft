@@ -143,9 +143,15 @@ const ZONE_LADDER = [
   { key: 'grocery_store',  pin: 'grocery_store',  name: 'Inside Riverside Market',        region: 'east_roswell' },   // v1.159
 ];
 
+// v1.486 (D.96 step 2, Michael: B): the fall and winter chapters come on the ladder after the summer. ZONE_LADDER stays
+// the summer's alone (the calendar, the crew's story and the summer's tests read it); the whole ladder is
+// ZONE_LADDER and then SEASON_LADDER, so the fall's first place opens when the Last Saturday is won.
+const SEASON_LADDER = SEASON_ZONES;
+for (const ch of SEASON_CHAPTERS) for (const z of ch.zones) PIN_SCENARIO_GROUPS[z.key] = z.matches.map(m => m.id);
+function ladderZones() { return ZONE_LADDER.concat(SEASON_LADDER); }
 // Index of a zone in the ladder (by its PIN_SCENARIO_GROUPS key).
 function zoneLadderIndex(zoneKey) {
-  return ZONE_LADDER.findIndex(z => z.key === zoneKey);
+  return ladderZones().findIndex(z => z.key === zoneKey);   // v1.486: the seasons after the summer
 }
 // v1.402 (D.57 step 4, Michael: all of docs/crew_ladder.md, 22 Oct): side matches. A zone's extra matches pay and count
 // toward the captains' and the rival's scores, but no longer gate the next match: a side match opens with the main match
@@ -173,7 +179,7 @@ function zoneCapstoneId(zoneKey) {
 function isZoneUnlocked(zoneKey) {
   const i = zoneLadderIndex(zoneKey);
   if (i <= 0) return i === 0;            // zone 0 unlocked; unknown key -> locked
-  const prevCap = zoneCapstoneId(ZONE_LADDER[i - 1].key);
+  const prevCap = zoneCapstoneId(ladderZones()[i - 1].key);   // v1.486
   return !!(prevCap && Game.persist.completed[prevCap]);
 }
 // Is a specific scenario unlocked? Needs its zone unlocked AND the prior

@@ -31,6 +31,7 @@ function retireScene(oldScene, newScene) {
 }
 function enterBedroom() {
   Game.mode = 'bedroom';
+  Holiday.chapter = null; Season.now = null; Season.fx = null;   // v1.486 (D.96): a season match's look ends with it
   Game.interactables = [];
   Scenes.bedroom = buildBedroomScene();
   retireScene(Game.scene, Scenes.bedroom.scene);   // v1.377

@@ -11,6 +11,7 @@ function enterScenario(scenarioId) {
   const sc = (Net.active && Net.coop && coopScenario(scenarioId)) || crewScenario(scenarioId);   // v1.274 (D.28 step 2): the match with your crew in it (v1.381, D.73: and your friend)
   // v1.352 (D.70 step 3): a Pickup Game's Holiday row holds for its match (houses and kids); every other match goes by the date
   Holiday.match = (sc && sc.pickup && PICKUP_HOLIDAYS.includes(sc.pickup.holiday) && sc.pickup.holiday !== 'date') ? sc.pickup.holiday : null;
+  Holiday.chapter = (sc && sc.season && sc.holiday) || null;   // v1.486 (D.96): Halloween Night brings the parked Halloween back for itself
   let built;
   // v1.35: time-of-day for this scenario ('day' default | 'night'), hoisted to
   // function scope so the night-flashlight pass below can read it.

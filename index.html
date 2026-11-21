@@ -1108,6 +1108,16 @@
     font-style: italic;
     line-height: 1.3;
   }
+  /* v1.486 (D.96): the season tabs; a pin with nothing on that season fades */
+  #worldMap .map-seasons { display: flex; gap: 6px; margin-left: auto; align-self: center; }
+  #worldMap .map-seasons[hidden] { display: none; }
+  #worldMap .map-seasons button { font: bold 14px var(--nb-marker, sans-serif); padding: 4px 12px; cursor: pointer;
+    background: rgba(244, 233, 216, 0.9); border: 2px solid #8b6f47; color: #5a4a35; }
+  #worldMap .map-seasons button.on { background: #2a2520; color: #f4e9d8; border-color: #2a2520; }
+  #worldMap .map-seasons button[data-season="fall"].on { background: #b3541e; border-color: #b3541e; }
+  #worldMap .map-seasons button[data-season="winter"].on { background: #3d6a9a; border-color: #3d6a9a; }
+  #worldMap .pin.offseason { opacity: 0.35; }
+  #worldMap .sc-season-when { font-size: 13px; color: #8b6f47; font-style: italic; }
   /* dim the locked pin's label so it reads as not-yet-available */
   #worldMap .pin.locked .label {
     opacity: 0.72;
@@ -2723,6 +2733,8 @@
         <div class="map-title">The Neighborhood</div>
         <div class="map-subtitle">Choose your battlefield</div>
       </div>
+      <!-- v1.486 (D.96): Summer, Fall and Winter, shown once the summer is won; each season's places and matches -->
+      <div class="map-seasons" id="mapSeasons" hidden></div>
       <button class="map-close nb-btn" id="mapCloseBtn">← BACK TO ROOM</button>
     </div>
     <div class="map-body">

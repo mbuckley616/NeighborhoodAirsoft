@@ -212,3 +212,95 @@ function seasonStep(dt) {
   }
   a.needsUpdate = true;
 }
+
+// ----------------------------------------------------------------------
+// v1.486 (D.96 step 2): the two chapters. Each is four places with three matches each. The matches are the summer's own
+// matchups replayed later in the year: a season match copies its summer match (`base`: the same kids, the same rules
+// and the same cover, since it is built under the base match's seed) and gives it a new name, a new story and its
+// season. Your crew comes along as it does in the summer. They come on the ladder after the summer
+// (`SEASON_LADDER`, 90-progression): Fall opens when the Last Saturday is won, Winter when the fall's last match is.
+// The summer's own matches are not touched.
+// ----------------------------------------------------------------------
+const SEASON_CHAPTERS = [
+  { season: 'fall', name: 'Fall 2003', zones: [
+    { key: 'fall_winnmark', pin: 'winnmark_court', name: 'Winnmark Court', region: 'horseshoe_bend', when: 'September', matches: [
+      { id: 'fall_wk_wingman', base: 'winnmark_team_2v2', scenarioName: 'First Saturday Back',
+        desc: "School's back and the first Saturday is warm enough. Seth's on your side again, against Trey and Brooke and whoever they bring, before the leaves come down for good. Same yards, less shade." },
+      { id: 'fall_wk_leaf_fort', base: 'winnmark_defend_culdesac', scenarioName: 'The Leaf-Pile Fort',
+        desc: "Somebody raked the whole cul-de-sac into one pile and built the plank fort around it. Seth, Trey and Devon want it. Hold out till the clock runs down." },
+      { id: 'fall_wk_squad', base: 'winnmark_team_3v3', scenarioName: 'Sweatshirt Weather',
+        desc: "Teams on Winnmark, hoods up. Seth and Trey are with you against Brooke, Jamie and Marcus's side, and it gets dark earlier now." },
+    ] },
+    { key: 'fall_hollow', pin: 'hollow', name: 'The Hollow · Chattahoochee', region: 'east_roswell', when: 'late September', matches: [
+      { id: 'fall_hw_leaves', base: 'hollow_skirmish_3v3', scenarioName: 'Leaves Underfoot',
+        desc: "The woods are loud now: every step crunches. Your crew's with you against Seth's side. They'll hear you coming, but you'll hear them too." },
+      { id: 'fall_hw_north_fort', base: 'hollow_attack_north_fort', scenarioName: 'The North Fort in October',
+        desc: "Mitchell's lot took the north fort back over the summer's end. The trees are thinner, so you can see them better, and they can see you." },
+      { id: 'fall_hw_big', base: 'hollow_big_battle', scenarioName: 'The Fall Big Game',
+        desc: "Everybody's back from vacation, so it's the Big Game again, everybody in, with the woods gone orange." },
+    ] },
+    { key: 'fall_school', pin: 'high_school', name: 'Hollins Ridge High', region: 'east_roswell', when: 'October', matches: [
+      { id: 'fall_hs_portables', base: 'school_portables_3v3', scenarioName: 'After the Last Bell',
+        desc: "The high schoolers have gone home, the lot's empty, and Caleb's crew is at the portables. Bring yours. You've got till the streetlights come on." },
+      { id: 'fall_hs_homecoming', base: 'school_defend_portables', scenarioName: 'Homecoming Week',
+        desc: "Homecoming banners on every portable. Hold the steps against Caleb's crew until the timer's done." },
+      { id: 'fall_hs_lights', base: 'school_night_4v4', scenarioName: 'Under the Stadium Lights',
+        desc: "There's a game Friday, and the stadium's lights are on early. Both crews, on the cold side of the bleachers." },
+    ] },
+    { key: 'fall_bunratty', pin: 'bunratty_court', name: 'Bunratty Court', region: 'sentinel', when: 'the end of October', matches: [
+      { id: 'fall_bn_raking', base: 'bunratty_team_2v2', scenarioName: 'Raking Season',
+        desc: "Your dad says rake the yard. Sean says rematch first. Ryan and Mitchell's side are waiting in the leaves." },
+      { id: 'fall_bn_hold', base: 'bunratty_hold_the_fort', scenarioName: 'Hold the Court Before Dark',
+        desc: "It's dark by six now. Hold the cul-de-sac against Mitchell's side until the timer's done, then everybody goes in for dinner." },
+      { id: 'fall_bn_halloween', base: 'bunratty_night_team_2v2', scenarioName: 'Halloween Night', holiday: 'halloween',
+        desc: "Trick-or-treating's done, the candy's counted, and the whole street's still out in costume. Sean's with you. Ryan and Mitchell's side are somewhere past the jack-o'-lanterns." },
+    ] },
+  ] },
+  { season: 'winter', name: 'Winter 2003-04', zones: [
+    { key: 'winter_bunratty', pin: 'bunratty_court', name: 'Bunratty Court', region: 'sentinel', when: 'December', matches: [
+      { id: 'winter_bn_first_snow', base: 'bunratty_team_2v1', scenarioName: 'First Snow',
+        desc: "It actually snowed. Not much, but enough. Nick's with you against Sean's side, before it melts." },
+      { id: 'winter_bn_storm', base: 'bunratty_storm_the_court', scenarioName: 'Storm the Snowy Court',
+        desc: "Mitchell's side have dug in at the cul-de-sac. Go take it. Stay off the ice on the driveways." },
+      { id: 'winter_bn_crew', base: 'bunratty_team_4v4', scenarioName: 'Christmas Break',
+        desc: "No school for two weeks. Mitchell's whole crew is out in their new coats, and so is yours." },
+    ] },
+    { key: 'winter_northcliff', pin: 'northcliff', name: "Northcliff / Martin's Landing", region: 'northcliff', when: 'Christmas week', matches: [
+      { id: 'winter_bf_bulb', base: 'bellfield_3v3', scenarioName: 'Bellfield in the Snow',
+        desc: "Andrew and Evan are with you on Bellfield against Christian's side. The bulb's white over and every yard has lights up." },
+      { id: 'winter_bf_fort', base: 'bellfield_defend_fort', scenarioName: 'Hold the Snow Fort',
+        desc: "The bulb fort's got a foot of snow on it now. Hold it against Mason's crew until the timer's done." },
+      { id: 'winter_bf_lamplight', base: 'bellfield_night_4v4', scenarioName: 'Lamplight in the Snow',
+        desc: "Teams on Bellfield after dark, the streetlamps on the snow. Haden, Connor and Evan have your back." },
+    ] },
+    { key: 'winter_market', pin: 'market_lot', name: 'Riverside Market', region: 'east_roswell', when: 'January', matches: [
+      { id: 'winter_lot_corral', base: 'lot_team_3v3', scenarioName: 'Cart Corral on Ice',
+        desc: "The lot's half plowed. Your crew against Marcus's, between the snowbanks." },
+      { id: 'winter_lot_doors', base: 'lot_defend_store', scenarioName: 'Snowed In at the Doors',
+        desc: "Hold the store's doors against Marcus's crew till the timer's done. The automatic doors keep opening on you." },
+      { id: 'winter_lot_close', base: 'lot_night_4v4', scenarioName: 'After Close in January',
+        desc: "The store's shut early for the weather and the lot's lit and empty. Seth's crew is out there, and so is yours." },
+    ] },
+    { key: 'winter_winnmark', pin: 'winnmark_court', name: 'Winnmark Court', region: 'horseshoe_bend', when: 'February', matches: [
+      { id: 'winter_wk_short', base: 'winnmark_team_2v3', scenarioName: 'Cold Hands',
+        desc: "Seth's with you against Trey, Brooke and Jamie's side. Gloves make the trigger hard to find." },
+      { id: 'winter_wk_treehouse', base: 'winnmark_defend_treehouse', scenarioName: 'The Treehouse in the Snow',
+        desc: "Marcus and Jamie want the treehouse, and its ladder is icy. Hold it till the timer's done." },
+      { id: 'winter_wk_snow_day', base: 'winnmark_team_3v3', scenarioName: 'Snow Day',
+        desc: "School's cancelled. The whole court's white and everybody's out. Seth and Trey are with you against Brooke, Jamie and Marcus's side, one last game before it melts." },
+    ] },
+  ] },
+];
+// The season matches as scenarios: a copy of the base with the chapter's name, story and season
+for (const ch of SEASON_CHAPTERS) for (const z of ch.zones) for (const m of z.matches) {
+  const base = SCENARIOS[m.base];
+  if (!base) continue;
+  SCENARIOS[m.id] = Object.assign({}, base, {
+    scenarioName: m.scenarioName, desc: m.desc, season: ch.season, seasonBase: m.base,
+    seedFrom: base.seedFrom || m.base,   // the summer match's cover, laid out the same
+  }, m.holiday ? { holiday: m.holiday } : {});
+}
+// The season's zones, in ladder order (90-progression puts them after the summer's)
+const SEASON_ZONES = SEASON_CHAPTERS.flatMap(ch => ch.zones.map(z => ({ key: z.key, pin: z.pin, name: z.name, region: z.region, season: ch.season, when: z.when })));
+function seasonZone(key) { return SEASON_ZONES.find(z => z.key === key) || null; }
+function seasonChapter(season) { return SEASON_CHAPTERS.find(ch => ch.season === season) || null; }
