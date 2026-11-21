@@ -7,6 +7,36 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Fall and winter campaigns: what shape (deep-work session, card fable/d96-campaigns, 2026-11-21; backlog D.96)**
+  Today the game is one campaign: the summer of 2003, eight zones on the wall calendar (1 June to the last Saturday,
+  30 August, `last_saturday` on your street), 79 matches. You asked for fall and winter with other weather and looks.
+  What the code makes cheap and dear: every map is built from its own hard-coded colours (about 750 of them across the
+  map files), so a season is best done as a pass over the finished scene (grass to straw or snow, leaves to orange or
+  gone, a lower sun, fog) plus new things laid on top (leaf piles, snow on roofs and cars, falling leaves or snow, kids in
+  hoodies or coats). A new place is a whole map build each, as the summer's were. No rain, wind or snow exists yet. The
+  parked Halloween looks (pumpkins, webs, costumes, v1.350-v1.353) are finished and waiting; Christmas lights are not built.
+  - A) **Two new chapters on the maps you know, looks only** _(recommended)_: when the last Saturday is won, the calendar
+    turns to **Fall 2003** (September to November: after school, early dusk, orange trees, leaf piles, falling leaves,
+    hoodies), then **Winter 2003-04** (December to February: snow on the ground and roofs, falling snow, bare trees, breath,
+    coats, Christmas lights and snow forts as cover). Each is a short ladder of about 12 new matches on 4-5 of the summer's
+    maps, with the summer's crew and Seth's; fall ends on Halloween night (the parked look comes back for that chapter
+    only), winter on a snow day. The summer is untouched and replayable; the map screen gets a Summer/Fall/Winter tab.
+    Weather is looks only: play is exactly the summer's. About 10-14 versions.
+  - B) **A, and the weather changes play**: in fall a gusty day drifts long shots sideways (the BB wobble you have, pushed
+    one way); in winter deep snow slows everyone about 15%, you leave footprints a kid can follow, and snow forts can be
+    knocked down. About 16-20 versions, and each rule needs your playtest.
+  - C) **A season picker, no new chapters**: once the summer is won, any summer match can be replayed in fall or winter
+    looks from its intro card (the Pickup Game board gets a Season row too). Variety without new matches or story.
+    About 5-7 versions.
+  - D) **New places for each season**: a fall chapter and a winter chapter on 2-3 new maps each (say a sledding hill and a
+    school's fall carnival), with the looks of A. Needs your reference pictures first, as the summer's maps did.
+    About 20-30 versions.
+  Recommendation: A. It gives the most variety for the work, keeps the summer exactly as it is (the brief's "Summer 2003"
+  stays the first chapter, and fall and winter continue the same kids' year), and finally gives the parked Halloween look
+  a home that is not on top of the summer. B's rules can follow later as a small item once you have seen the seasons;
+  C can be added to A cheaply (the picker reuses the same looks) if you want both.
+  Michael: **B) A, and the weather changes play**. (2026-11-21)
+
 - **Nick Won't Budge: when he takes cover after his walk (play builder, 2026-11-19, v1.482; critic 19 Nov, Found in play)**
   Nick now stops where his AR reaches you and fires (v1.482). But shoot at him there and he does what every kid does under
   fire in the open: he runs to the nearest cover that shields him, which on Bunratty is back in his yard behind the
