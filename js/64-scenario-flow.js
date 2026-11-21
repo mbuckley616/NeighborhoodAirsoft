@@ -33,7 +33,7 @@ function enterScenario(scenarioId) {
     built = withSeededRandom(_seedKey, () => builder(sc.builderArg || undefined, _tod));
     addEdgeBackdrop(built, sc.builderFn, _tod);   // v1.252 (D.24): scenery past the edge, never solid
     addHolidayDecor(built, _tod);   // v1.350 (D.70): Halloween on the houses round its date, never solid
-    applySeasonLook(built, seasonOf(sc), _tod);   // v1.485 (D.96): fall or winter over the map; the summer passes untouched
+    applySeasonLook(built, seasonOf(sc), _tod, scenarioId);   // v1.485 (D.96): fall or winter over the map; the summer passes untouched
     Game.camera.far = built.viewFar || 200; Game.camera.updateProjectionMatrix();   // v1.303 (D.51): a real-scale map sees further
   } else {
     showModal('Coming Soon', 'This scenario is locked in v1. More coming in future builds.');

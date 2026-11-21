@@ -24,6 +24,7 @@ function updateBBs(dt) {
     bb.vel.x += bb.curveDir.x * curveAccel * dt;
     bb.vel.y += bb.curveDir.y * curveAccel * dt;
     bb.vel.z += bb.curveDir.z * curveAccel * dt;
+    if (Season.wind) seasonWindOnBB(bb, onsetRamp, dt);   // v1.487 (D.96): a gusty fall day pushes long shots one way
 
     // Integrate (sub-step for stability at high speeds)
     const oldPos = bb.pos.clone();

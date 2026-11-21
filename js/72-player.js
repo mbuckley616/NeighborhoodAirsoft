@@ -490,6 +490,7 @@ function updatePlayer(dt) {
       // the gun's own handling. Heavier kit → slower. Cached at scenario start so
       // this isn't recomputed every frame (loadout can't change mid-match).
       speed *= (Game.scenario.weightSpeedMult ?? 1.0);
+      speed *= Season.moveMult;   // v1.487 (D.96): deep snow, 85% in winter
       // v1.26: keep sprint speed through a jump that was launched while sprinting
       // (airSprint), so jumping no longer cuts you down to jog speed mid-leap.
       const sprintActive = Game.player.sprinting || (Game.player.airSprint && !Game.player.onGround);

@@ -3,7 +3,7 @@
 // leaves or snow round the camera. Checked: the summer is exactly as before, also after a winter match (the pass
 // recolours copies, never the shared materials); fall and winter switch the look; the cover layout and what is solid
 // are the same in every season; cars keep their paint; the leaves and snow fall and follow the camera.
-// v1.486: and the two chapters on the ladder and the map (below).
+// v1.486: and the two chapters on the ladder and the map (below). The weather's rules and the snow forts (v1.487, v1.488) are tests/seasons-weather.test.mjs.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -24,7 +24,7 @@ const read = () => page.evaluate(() => {
       if (hsl.h >= 0.17 && hsl.h <= 0.47 && hsl.s > 0.1 && hsl.l > 0.04 && hsl.l < 0.85) green++;
     }
     let car = false;
-    for (let p = o; p; p = p.parent) if (p.userData && p.userData.noSeason && p.name !== 'seasonFx') car = true;
+    for (let p = o; p; p = p.parent) if (p.userData && p.userData.noSeason && !p.userData.cardboardBox && !/^season/.test(p.name)) car = true;
     if (car && o.material && o.material.color) cars.push(o.material.color.getHexString());
   });
   // the map's big ground mesh (vertex coloured): how much of it is light (snow)
@@ -166,5 +166,6 @@ console.log('   ' + JSON.stringify({ hw, ws, sn }));
 check('Halloween Night: a fall night with lanterns on the houses and every kid but one in six in costume', hw.season === 'fall' && hw.decor && hw.costumes > 0 && hw.night === 'night', hw);
 check('a winter match is in winter, with no Halloween', ws.season === 'winter' && !ws.decor && ws.costumes === 0, ws);
 check('its summer match after it is the summer, with no Halloween (still parked)', sn.season === null && !sn.decor && sn.costumes === 0, sn);
+
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

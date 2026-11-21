@@ -10,7 +10,8 @@
 // adds is solid. The weather's rules of play come in later versions.
 // ----------------------------------------------------------------------
 const SEASONS = ['fall', 'winter'];
-const Season = { force: null, now: null, fx: null };   // force: tests ('summer' | 'fall' | 'winter'); now: the match's season
+const Season = { force: null, now: null, fx: null,   // force: tests ('summer' | 'fall' | 'winter'); now: the match's season
+  wind: null, moveMult: 1, prints: null };              // v1.487: the weather's rules (below)
 // The season a scenario is played in: null for the summer
 function seasonOf(sc) {
   if (Season.force) return Season.force === 'summer' ? null : Season.force;
@@ -75,9 +76,10 @@ function seasonRole(mesh, box, size) {
   return 'leaf';
 }
 // The pass over a built map. `built` is a scene builder's result; `timeOfDay` is 'day' or 'night'.
-function applySeasonLook(built, season, timeOfDay) {
+function applySeasonLook(built, season, timeOfDay, matchId) {
   Season.now = season || null;
   Season.fx = null;
+  seasonWeather(built, season, timeOfDay, matchId);   // v1.487: the wind, the deep snow, the footprints
   if (!season || !built || !built.scene) return null;
   const scene = built.scene;
   const skip = new Set();
@@ -195,6 +197,7 @@ function seasonParticles(scene, season, timeOfDay) {
 }
 // One step of the falling leaves or snow (stepGame, in a match)
 function seasonStep(dt) {
+  if (Season.prints) seasonPrintsStep(dt);   // v1.487: footprints in the snow
   const fx = Season.fx;
   if (!fx || !fx.pts.parent || fx.pts.parent !== Game.scene) return;
   fx.t += dt;
@@ -202,9 +205,10 @@ function seasonStep(dt) {
   const hx = SEASON_BOX.x / 2, hz = SEASON_BOX.z / 2, lo = cam.y - SEASON_BOX.y * 0.4, hi = lo + SEASON_BOX.y;
   for (let i = 0; i < fx.count; i++) {
     const k = i * 3, ph = fx.phase[i];
-    p[k] += (Math.sin(fx.t * 1.3 + ph) * S.sway + S.drift) * dt;
+    const W = Season.wind, wv = W ? seasonWindNow() * 0.5 : 0;   // v1.487: the leaves blow the way the wind does
+    p[k] += (Math.sin(fx.t * 1.3 + ph) * S.sway + (W ? W.x * wv : S.drift)) * dt;
     p[k + 1] -= S.fall * (0.75 + 0.5 * ((ph * 7) % 1)) * dt;
-    p[k + 2] += Math.cos(fx.t * 0.9 + ph) * S.sway * 0.6 * dt;
+    p[k + 2] += (Math.cos(fx.t * 0.9 + ph) * S.sway * 0.6 + (W ? W.z * wv : 0)) * dt;
     if (p[k + 1] < lo) p[k + 1] += SEASON_BOX.y;   // round again from the top
     else if (p[k + 1] > hi) p[k + 1] -= SEASON_BOX.y;
     if (p[k] < cam.x - hx) p[k] += SEASON_BOX.x; else if (p[k] > cam.x + hx) p[k] -= SEASON_BOX.x;
@@ -304,3 +308,180 @@ for (const ch of SEASON_CHAPTERS) for (const z of ch.zones) for (const m of z.ma
 const SEASON_ZONES = SEASON_CHAPTERS.flatMap(ch => ch.zones.map(z => ({ key: z.key, pin: z.pin, name: z.name, region: z.region, season: ch.season, when: z.when })));
 function seasonZone(key) { return SEASON_ZONES.find(z => z.key === key) || null; }
 function seasonChapter(season) { return SEASON_CHAPTERS.find(ch => ch.season === season) || null; }
+
+// ----------------------------------------------------------------------
+// v1.487 (D.96 step 3, Michael: B, "A, and the weather changes play"): the weather's rules.
+// - Fall, by day, is gusty. The wind pushes every BB in the air one way, harder in the gusts, from the point where the
+//   BB's own curve starts (its gun's `curveOnsetDistance`, 4 m for most), so a shot inside about 10 m goes where it was
+//   aimed and a long one drifts: the wobble you know, pushed one way. Both sides' BBs drift alike. The day's wind comes
+//   from the match (the same every time you play it), and the falling leaves blow the same way, which is how you read it.
+// - Winter: deep snow. Everybody moves at 85% (you and every kid, sprinting or not).
+// - Winter: footprints. You and every kid leave prints in the snow as you walk, and they fill in over 30 s. A kid who
+//   comes within 4 m of his target's trail while he can't see him follows it: he knows where its newest print is, as if
+//   he had seen him there then (the way he reads a glow-stick tracer, v1.468), and plays it as a kid who just lost sight.
+// ----------------------------------------------------------------------
+const WIND_ACCEL = [2.5, 4.5];      // m/s² across the BB's path, the calm and the strong day (a gust adds up to 35%)
+const SNOW_MOVE_MULT = 0.85;
+const PRINT_STEP = 0.8, PRINT_LIFE = 30, PRINT_FOLLOW_M = 4, PRINT_MAX = 600;
+function seasonWeather(built, season, timeOfDay, matchId) {
+  Season.wind = null; Season.moveMult = 1;
+  if (Season.prints && Season.prints.mesh && Season.prints.mesh.parent) Season.prints.mesh.parent.remove(Season.prints.mesh);
+  Season.prints = null;
+  if (season === 'fall' && timeOfDay !== 'night') {
+    const k = 'wind|' + (matchId || ''), h1 = seasonHash(_hashStringToSeed(k)), h2 = seasonHash(_hashStringToSeed(k + '|s'));
+    const a = h1 * Math.PI * 2;
+    Season.wind = { x: Math.cos(a), z: Math.sin(a), accel: WIND_ACCEL[0] + (WIND_ACCEL[1] - WIND_ACCEL[0]) * h2, phase: h1 * 10 };
+  }
+  if (season === 'winter') {
+    Season.moveMult = SNOW_MOVE_MULT;
+    if (built && built.scene) Season.prints = seasonPrintField(built.scene);
+  }
+}
+// The wind's push now, in m/s² (gusting over the round)
+function seasonWindNow() {
+  const W = Season.wind;
+  if (!W) return 0;
+  const t = (Game.scenario && Game.scenario.roundTime) || 0;
+  return W.accel * (0.8 + 0.2 * Math.sin(t * 0.7 + W.phase) + 0.15 * Math.max(0, Math.sin(t * 2.3 + W.phase * 3)));
+}
+// One step of a BB in the wind (updateBBs); `ramp` is 0 inside the BB's curve onset and 1 past it
+function seasonWindOnBB(bb, ramp, dt) {
+  const W = Season.wind;
+  if (!W || !(ramp > 0)) return;
+  const a = seasonWindNow() * ramp * dt;
+  bb.vel.x += W.x * a; bb.vel.z += W.z * a;
+}
+// The footprints: one instanced mesh of small dark ovals on the snow, each fading back to snow over PRINT_LIFE
+function seasonPrintField(scene) {
+  const geo = new THREE.CircleGeometry(0.5, 8);
+  geo.rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const mesh = new THREE.InstancedMesh(geo, mat, PRINT_MAX);
+  mesh.name = 'seasonPrints';
+  mesh.count = 0;
+  mesh.frustumCulled = false;
+  mesh.userData.noSeason = true;
+  mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(PRINT_MAX * 3), 3);
+  scene.add(mesh);
+  return { mesh, list: [], next: 0, last: new Map(), side: new Map() };
+}
+const _printM = new THREE.Matrix4(), _printQ = new THREE.Quaternion(), _printS = new THREE.Vector3(0.11, 1, 0.24), _printP = new THREE.Vector3();
+const _printUp = new THREE.Vector3(0, 1, 0), _printSnow = new THREE.Color(0xdfe6ef), _printDark = new THREE.Color(0x7d8a9e), _printC = new THREE.Color();
+// Lay a print for a walker who has gone PRINT_STEP since his last one
+function seasonPrintStep(by, pos, now) {
+  const F = Season.prints;
+  const last = F.last.get(by);
+  if (last && Math.hypot(pos.x - last.x, pos.z - last.z) < PRINT_STEP) return;
+  F.last.set(by, { x: pos.x, z: pos.z });
+  if (!last) return;
+  const yaw = Math.atan2(pos.x - last.x, pos.z - last.z), side = F.side.get(by) ? 1 : -1;
+  F.side.set(by, !F.side.get(by));
+  const x = pos.x + Math.cos(yaw) * 0.1 * side, z = pos.z - Math.sin(yaw) * 0.1 * side;
+  const fn = Game.scenario && Game.scenario.groundY;
+  const y = (typeof fn === 'function' ? fn(x, z) : 0);
+  const i = F.next; F.next = (F.next + 1) % PRINT_MAX;
+  F.list[i] = { x, z, y, t: now, by };
+  _printQ.setFromAxisAngle(_printUp, yaw); _printP.set(x, y + 0.02, z);
+  F.mesh.setMatrixAt(i, _printM.compose(_printP, _printQ, _printS));
+  F.mesh.setColorAt(i, _printDark);
+  F.mesh.count = Math.max(F.mesh.count, i + 1);
+  F.mesh.instanceMatrix.needsUpdate = true; F.mesh.instanceColor.needsUpdate = true;
+}
+// Each step of a winter match: prints for everyone walking, and the old ones filling in
+function seasonPrintsStep(dt) {
+  const F = Season.prints;
+  if (!F || !F.mesh.parent || F.mesh.parent !== Game.scene || Game.mode !== 'scenario') return;
+  const now = aiNow();
+  if (Game.player.onGround !== false) seasonPrintStep(Game.player, Game.player.pos, now);
+  for (const e of (Game.scenario.enemies || [])) if (e.health > 0 && e.pos && !e.remote) seasonPrintStep(e, e.pos, now);
+  F._fadeT = (F._fadeT || 0) + dt;
+  if (F._fadeT < 0.5) return;   // the filling-in, twice a second
+  F._fadeT = 0;
+  for (let i = 0; i < F.list.length; i++) {
+    const p = F.list[i];
+    if (!p) continue;
+    const k = Math.min(1, (now - p.t) / PRINT_LIFE);
+    F.mesh.setColorAt(i, _printC.copy(_printDark).lerp(_printSnow, k));
+  }
+  F.mesh.instanceColor.needsUpdate = true;
+}
+// A kid on his target's trail: the newest print of it (fresher than PRINT_LIFE), if one of them is within PRINT_FOLLOW_M
+// of him, else null. Read by the kids' spotted memory (80-ai) when he has no line.
+function seasonTrailFor(e, ref) {
+  const F = Season.prints;
+  if (!F || !ref || !e.pos) return null;
+  const now = aiNow();
+  let near = false, newest = null;
+  for (const p of F.list) {
+    if (!p || p.by !== ref || now - p.t > PRINT_LIFE) continue;
+    if (!newest || p.t > newest.t) newest = p;
+    if (!near && Math.hypot(p.x - e.pos.x, p.z - e.pos.z) < PRINT_FOLLOW_M) near = true;
+  }
+  return near ? newest : null;
+}
+// The briefing's line for a season match: the season and what its weather does
+function seasonBriefTag(sc) {
+  if (sc.season === 'fall') return sc.timeOfDay === 'night' ? '🍂 FALL' : '🍂 FALL · WINDY: LONG SHOTS DRIFT';
+  if (sc.season === 'winter') return '❄ WINTER · DEEP SNOW: EVERYONE SLOWER, AND YOU LEAVE TRACKS';
+  return '';
+}
+
+// The briefing's line for a season match: the season and what its weather does
+function seasonBriefTag(sc) {
+  if (sc.season === 'fall') return sc.timeOfDay === 'night' ? '🍂 FALL' : '🍂 FALL · WINDY: LONG SHOTS DRIFT';
+  if (sc.season === 'winter') return '❄ WINTER · DEEP SNOW: EVERYONE SLOWER, AND YOU LEAVE TRACKS';
+  return '';
+}
+
+// ----------------------------------------------------------------------
+// v1.488 (D.96 step 4, Michael: B, "snow forts can be knocked down"): in winter every cardboard box on the map
+// (addHomeDepotBox, the cover the summer's matches are built round) is a block of packed snow instead, where it stood
+// and as big. A BB that hits one is swallowed with a puff, and every hit counts, from either side: at SNOW_SLUMP_HITS
+// it slumps to a bit over half its height (you can shoot over it, and a kid no longer picks it as cover to stand behind),
+// and at SNOW_FALL_HITS it falls in and is gone from the map's obstacles and cover. Nothing else on the map breaks.
+// ----------------------------------------------------------------------
+const SNOW_SLUMP_HITS = 15, SNOW_FALL_HITS = 30, SNOW_SLUMP_H = 0.55;
+function seasonSnowForts(built) {
+  let n = 0;
+  const snow = new THREE.MeshStandardMaterial({ color: 0xeef2f7, roughness: 1 });
+  const shade = new THREE.MeshStandardMaterial({ color: 0xc9d4e2, roughness: 1 });
+  for (const o of (built.obstacles || [])) {
+    const g = o && o.mesh;
+    if (!g || !g.userData || !g.userData.cardboardBox) continue;
+    let k = 0;
+    g.traverse(m => { if (m.isMesh) m.material = (k++ === 0 ? snow : shade); });
+    o.surface = 'snow'; o.snowFort = { hits: 0, h0: o.h, stage: 0 };
+    g.userData.noSeason = true;
+    n++;
+  }
+  return n;
+}
+// A BB hits a snow block (updateBBs): it is swallowed, and the block takes the hit. Returns true (the BB is gone).
+function seasonSnowHit(o, bb) {
+  const f = o.snowFort;
+  f.hits++;
+  if (typeof playImpactCardboard === 'function') playImpactCardboard(bb.pos);
+  seasonSnowPuff(bb.pos);
+  if (f.stage === 0 && f.hits >= SNOW_SLUMP_HITS) {
+    f.stage = 1; o.h = f.h0 * SNOW_SLUMP_H;
+    if (o.mesh) o.mesh.scale.y = SNOW_SLUMP_H;
+  } else if (f.stage === 1 && f.hits >= SNOW_FALL_HITS) {
+    f.stage = 2;
+    if (o.mesh) o.mesh.visible = false;
+    const rm = list => { const i = list ? list.indexOf(o) : -1; if (i >= 0) list.splice(i, 1); };
+    rm(Game.player.obstacles); rm(Game.scenario.cover);
+    for (let i = 0; i < 6; i++) seasonSnowPuff({ x: (o.minX + o.maxX) / 2 + (Math.random() - 0.5) * 0.8, y: f.h0 * 0.5 * Math.random(), z: (o.minZ + o.maxZ) / 2 + (Math.random() - 0.5) * 0.8 });
+  }
+  return true;
+}
+// A puff of snow where a BB went in: a few white flecks that fall (the BB fragments' own physics)
+function seasonSnowPuff(at) {   // (each fleck its own geometry: updateFragments disposes it)
+  if (!Game.scenario.fragments) Game.scenario.fragments = [];
+  for (let i = 0; i < 3; i++) {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0xf4f7fb, transparent: true, opacity: 0.9 }));
+    mesh.position.set(at.x, at.y, at.z);
+    Game.scene.add(mesh);
+    Game.scenario.fragments.push({ mesh, vel: new THREE.Vector3((Math.random() - 0.5) * 2, 1 + Math.random() * 1.5, (Math.random() - 0.5) * 2), age: 0, lifetime: 0.8 });
+  }
+}

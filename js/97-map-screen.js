@@ -44,6 +44,9 @@ function renderScenarioCard(scenarioId, num, isNext) {
   if (sc.scenarioType === 'attack') badges.push('⚔ ATTACK');
   if (sc.scenarioType === 'defend') badges.push('🛡 DEFEND');
   if (sc.timeOfDay === 'night') badges.push('🌙 NIGHT');          // v1.35
+  if (sc.season === 'fall' && sc.timeOfDay !== 'night') badges.push('🍂 WINDY');   // v1.487 (D.96): long shots drift
+  if (sc.season === 'winter') badges.push('❄ DEEP SNOW');           // v1.487: slower, and you leave tracks
+  if (sc.season && sc.holiday === 'halloween') badges.push('🎃 HALLOWEEN');   // v1.487
   if (sc.vip) badges.push('★ VIP');                               // v1.170
   if (sc.ctf) badges.push('⚑ FLAGS');                             // v1.189
   if (sc.timerSec && /survive/.test(sc.winCondition || '')) badges.push('⏱ ' + sc.timerSec + 's');
@@ -97,6 +100,7 @@ function openScenarioBrief(scenarioId) {
   const locParts = [];
   if (brief.name) locParts.push(brief.name.toUpperCase());
   if (brief.timeOfDay === 'night') locParts.push('🌙 NIGHT');
+  if (SCENARIOS[scenarioId] && SCENARIOS[scenarioId].season) locParts.push(seasonBriefTag(SCENARIOS[scenarioId]));   // v1.487 (D.96)
   document.getElementById('briefLoc').textContent = locParts.join(' · ');
   document.getElementById('briefTitle').textContent = brief.scenarioName || brief.name;
   document.getElementById('briefDesc').textContent = brief.desc || '';
