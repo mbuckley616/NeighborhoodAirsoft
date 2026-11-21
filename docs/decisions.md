@@ -35,7 +35,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   stays the first chapter, and fall and winter continue the same kids' year), and finally gives the parked Halloween look
   a home that is not on top of the summer. B's rules can follow later as a small item once you have seen the seasons;
   C can be added to A cheaply (the picker reuses the same looks) if you want both.
-  Michael: **B) A, and the weather changes play** (2026-11-21, control room).
+  Michael: **B) A, and the weather changes play**. (2026-11-21)
 
 - **Nick Won't Budge: when he takes cover after his walk (play builder, 2026-11-19, v1.482; critic 19 Nov, Found in play)**
   Nick now stops where his AR reaches you and fires (v1.482). But shoot at him there and he does what every kid does under
