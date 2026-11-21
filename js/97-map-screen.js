@@ -5,7 +5,7 @@ function scenarioLockReason(scenarioId) {
   if (!ctx) return '';
   if (!isZoneUnlocked(ctx.group)) {
     const i = zoneLadderIndex(ctx.group);
-    const prevZone = ZONE_LADDER[i - 1];
+    const prevZone = ladderZones()[i - 1];   // v1.486: a season's first place follows the summer's last
     const prevCap  = zoneCapstoneId(prevZone.key);
     const capName  = (prevCap && SCENARIOS[prevCap]?.scenarioName) || (prevZone.name + ' finale');
     return `Clear ${prevZone.name} (beat “${capName}”) to unlock this area.`;
@@ -44,6 +44,10 @@ function renderScenarioCard(scenarioId, num, isNext) {
   if (sc.scenarioType === 'attack') badges.push('⚔ ATTACK');
   if (sc.scenarioType === 'defend') badges.push('🛡 DEFEND');
   if (sc.timeOfDay === 'night') badges.push('🌙 NIGHT');          // v1.35
+  if (sc.season === 'fall' && sc.timeOfDay !== 'night') badges.push('🍂 WINDY');   // v1.487 (D.96): long shots drift
+  if (sc.season === 'winter') badges.push('❄ DEEP SNOW');           // v1.487: slower, and you leave tracks
+  if (sc.season && sc.holiday === 'halloween') badges.push('🎃 HALLOWEEN');   // v1.487
+  if (sc.season && sc.holiday === 'christmas') badges.push('🎄 CHRISTMAS');   // v1.489: the lights are up
   if (sc.vip) badges.push('★ VIP');                               // v1.170
   if (sc.ctf) badges.push('⚑ FLAGS');                             // v1.189
   if (sc.timerSec && /survive/.test(sc.winCondition || '')) badges.push('⏱ ' + sc.timerSec + 's');
@@ -97,6 +101,7 @@ function openScenarioBrief(scenarioId) {
   const locParts = [];
   if (brief.name) locParts.push(brief.name.toUpperCase());
   if (brief.timeOfDay === 'night') locParts.push('🌙 NIGHT');
+  if (SCENARIOS[scenarioId] && SCENARIOS[scenarioId].season) locParts.push(seasonBriefTag(SCENARIOS[scenarioId]));   // v1.487 (D.96)
   document.getElementById('briefLoc').textContent = locParts.join(' · ');
   document.getElementById('briefTitle').textContent = brief.scenarioName || brief.name;
   document.getElementById('briefDesc').textContent = brief.desc || '';
@@ -142,10 +147,19 @@ function fitScenarioCards(info) {
 // v1.146 (D.8 step 1): a pin click and openMap both show a zone through here; the chosen pin is marked
 // `.selected` and the right column scrolls back to its top.
 function selectMapZone(sc) {
-    document.querySelectorAll('#worldMap .pin').forEach(p => p.classList.toggle('selected', p.dataset.scenario === sc));
+    mapSeasonSync(sc);   // v1.486 (D.96): the tab follows the zone (a fall place opens the Fall tab)
+    const pinKey = mapPinOfZone(sc);
+    document.querySelectorAll('#worldMap .pin').forEach(p => p.classList.toggle('selected', p.dataset.scenario === pinKey));
     const info = document.getElementById('scenarioInfo');
     info.scrollTop = 0;
     if (PIN_SCENARIO_GROUPS[sc]) Game._mapZone = sc;
+    if (/^offseason:/.test(sc)) {   // v1.486: a place with nothing on in this season
+      const ch = seasonChapter(Game._mapSeason);
+      info.className = 'scenario-info';
+      info.innerHTML = `<div class="sc-name">${(ladderZones().find(z => z.pin === pinKey) || {}).name || ''}</div>
+        <div class="sc-row-lock" style="margin-top:6px;">Nothing on here in ${ch ? ch.name : 'this season'}. The pins in colour are where the games are.</div>`;
+      return;
+    }
     if (sc === 'locked') {
       // v1.48: the locked pin is Northcliff — show its teaser blurb.
       const nc = ZONE_LADDER.find(z => z.pin === 'locked');
@@ -180,8 +194,10 @@ function selectMapZone(sc) {
       const open = id => isScenarioUnlocked(id) && !Game.persist.completed[id];
       const nextId = ids.find(id => open(id) && !isSideMatch(id)) || ids.find(open);   // v1.402: the main line first
       const doneN = ids.filter(id => Game.persist.completed[id]).length;
+      const sz = seasonZone(sc), ch = sz && seasonChapter(sz.season);   // v1.486: a season's place says when it is
       info.innerHTML = `
         <div class="sc-name">${headerName}</div>
+        ${sz ? `<div class="sc-season-when">${ch.name} · ${sz.when}</div>` : ''}
         <div class="sc-zone-count">${doneN} of ${ids.length} won</div>
         <div class="sc-list">${ids.map((id, i) => renderScenarioCard(id, i + 1, id === nextId)).join('')}</div>
       `;
@@ -206,5 +222,64 @@ function selectMapZone(sc) {
     }
 }
 document.querySelectorAll('#worldMap .pin').forEach(pin => {
-  pin.addEventListener('click', () => selectMapZone(pin.dataset.scenario));
+  pin.addEventListener('click', () => selectMapZone(mapZoneForPin(pin.dataset.scenario)));   // v1.486: this season's place there
 });
+
+// ---------------------------------------------------------------------
+// v1.486 (D.96 step 2, Michael: B): the map's seasons. Once the Last Saturday is won, tabs over the map read Summer, Fall
+// and Winter (Winter once the fall's last match is won). A tab shows that season's places: the pins that have one are
+// in colour (grey while locked), the others fade, and a pin opens that season's matches there.
+// ---------------------------------------------------------------------
+function mapSeasonsOpen() {
+  return ['summer'].concat(SEASON_CHAPTERS.filter(ch => isZoneUnlocked(ch.zones[0].key)).map(ch => ch.season));
+}
+function mapPinOfZone(key) { const z = seasonZone(key); return z ? z.pin : String(key).replace(/^offseason:/, ''); }
+function mapZoneForPin(pinKey) {
+  const season = Game._mapSeason || 'summer';
+  if (season === 'summer' || pinKey === 'locked') return pinKey;
+  const z = SEASON_ZONES.find(z => z.season === season && z.pin === pinKey);
+  return z ? z.key : 'offseason:' + pinKey;
+}
+// Set the tab from the zone shown, draw the tabs, and the pins' states for that season
+function mapSeasonSync(sc) {
+  const z = seasonZone(sc);
+  if (z) Game._mapSeason = z.season;
+  else if (PIN_SCENARIO_GROUPS[sc] || sc === 'locked') Game._mapSeason = 'summer';
+  const open = mapSeasonsOpen();
+  if (!open.includes(Game._mapSeason)) Game._mapSeason = 'summer';
+  const bar = document.getElementById('mapSeasons');
+  if (bar) {
+    bar.hidden = open.length < 2;
+    const label = s => s === 'summer' ? 'Summer' : seasonChapter(s).name.split(' ')[0];
+    bar.innerHTML = open.map(s => `<button class="nb-btn${s === Game._mapSeason ? ' on' : ''}" data-season="${s}">${label(s)}</button>`).join('');
+    bar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => selectMapZone(mapSeasonDefaultZone(b.dataset.season))));
+  }
+  mapSeasonPinStates();
+}
+// The place a tab opens on: the furthest one open in that season, else its first
+function mapSeasonDefaultZone(season) {
+  if (season === 'summer') {
+    let key = ZONE_LADDER[0].key;
+    for (const z of ZONE_LADDER) if (isZoneUnlocked(z.key)) key = z.key;
+    return key;
+  }
+  const ch = seasonChapter(season);
+  let key = ch.zones[0].key;
+  for (const z of ch.zones) if (isZoneUnlocked(z.key)) key = z.key;
+  return key;
+}
+// The pins in a season tab: a pin with a place that season is locked or open as that place is; the rest fade
+function mapSeasonPinStates() {
+  const season = Game._mapSeason || 'summer';
+  document.querySelectorAll('#worldMap .pin').forEach(pin => {
+    const key = pin.dataset.scenario;
+    if (season === 'summer') {
+      pin.classList.remove('offseason');
+      if (PIN_SCENARIO_GROUPS[key]) pin.classList.toggle('locked', !isZoneUnlocked(key));   // back from a season tab
+      return;
+    }
+    const z = SEASON_ZONES.find(z => z.season === season && z.pin === key);
+    pin.classList.toggle('offseason', !z);
+    if (z) pin.classList.toggle('locked', !isZoneUnlocked(z.key));
+  });
+}

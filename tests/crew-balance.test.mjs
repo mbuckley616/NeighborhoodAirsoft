@@ -19,7 +19,8 @@ const count = (id, crew, done, bench) => page.evaluate(([id, crew, done, bench])
 // The rule over every team match, the first time through (with the crew you'd have then)
 const rule = await page.evaluate(() => {
   const out = [];
-  for (const id of Object.keys(SCENARIOS).filter(crewTeamMatch).sort((a, b) => crewLadderPos(a) - crewLadderPos(b))) {
+  // v1.490 (D.96): the summer's; the fall's and winter's copies are checked against their bases below
+  for (const id of Object.keys(SCENARIOS).filter(id => crewTeamMatch(id) && !SCENARIOS[id].season).sort((a, b) => crewLadderPos(a) - crewLadderPos(b))) {
     const own = SCENARIOS[id].enemySetup, oursOwn = own.filter(e => e.team === 'player').length + 1, theirsOwn = own.length - oursOwn + 1;
     Game.persist.crew = crewFirstTime(id); Game.persist.completed = {}; crewBench.clear();
     const s = crewSetup(id), ours = s.filter(e => e.team === 'player').length + 1, theirs = s.length - ours + 1;
@@ -34,6 +35,23 @@ console.log('   finales, first time:', JSON.stringify(fin));
 // v1.393 (D.57 step 1): + the 12 solo matches your crew now plays and the 2 CLUTCH, which have their own rules
 // (tests/match-type.test.mjs): their side at least yours, and a CLUTCH's sides as its own
 check('46 team matches on the ladder (v1.318: + Night Swim; v1.393: + 14 with crewPosts), 8 of them a zone\'s finale', rule.length === 46 && finales.length === 8 && rule.filter(r => r.posts).length === 14, rule.length);
+// v1.490 (D.96): the fall's and winter's team matches are the summer's replayed (SEASON_CHAPTERS) with your whole crew by
+// then; their side is sized for that crew as the summer's is for yours, never less than the match's own margin (First Snow
+// is the summer's 2 v 1, so one short), and in an attack or a defence (crewPosts) at least yours, as the summer's rule
+const seasonSides = await page.evaluate(() => {
+  const out = [];
+  for (const id of Object.keys(SCENARIOS).filter(id => SCENARIOS[id].season && crewTeamMatch(id))) {
+    Game.persist.crew = crewFirstTime(id); Game.persist.completed = {}; crewBench.clear();
+    const s = crewSetup(id);
+    const own = SCENARIOS[id].enemySetup, oursOwn = own.filter(e => e.team === 'player').length + 1;
+    out.push({ id, ours: s.filter(e => e.team === 'player').length + 1, theirs: s.filter(e => e.team !== 'player').length, margin: own.length - oursOwn + 1 - oursOwn, posts: !!SCENARIOS[id].crewPosts });
+  }
+  Game.persist.crew = []; Game.persist.completed = {};
+  return out;
+});
+console.log('   season sides, first time:', JSON.stringify(Object.fromEntries(seasonSides.map(r => [r.id, `${r.ours}v${r.theirs}`]))));
+const seasonBad = seasonSides.filter(r => r.posts ? r.theirs < r.ours : r.theirs - r.ours < r.margin);
+check('every fall and winter team match with your whole crew: its own margin, or (an attack or a defence) their side at least yours', seasonSides.length >= 20 && seasonBad.length === 0, seasonBad.concat([{ n: seasonSides.length }]));
 // v1.406 (D.57 step 4): Tyler's finale (Graveyard Shift) is at plus one though the Last Saturday ends its zone, and Down Two
 // and Down Two in the Dark are always two short: neither is an ordinary match
 const ordinary = rule.filter(r => !r.finale && !r.posts && !r.captainFinale && !r.downTwo && r.theirs - r.ours !== r.theirsOwn - r.oursOwn);

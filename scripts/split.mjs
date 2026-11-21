@@ -54,6 +54,7 @@ export const CUTS = [
   ['54-fp-gear.js',       'const FP_GUN_MOUNT',                  'play'],  // first-person accessories, the workbench, shop pictures, loader/mag/walkie, pause and forfeit
   ['60-scene-entry.js',   'function enterBedroom(',              'core'],  // enterBedroom, crew starts, findClearSpawn, base markers
   ['62-backdrops.js',     'const EDGE_BACKDROPS',                'maps'],  // EDGE_BACKDROPS, holiday decor, costumes, addEdgeBackdrop
+  ['63-seasons.js',       'const SEASONS',                       'maps'],  // v1.485 (D.96): the seasons' look, seasonStep
   ['64-scenario-flow.js', 'function enterScenario(',             'core'],  // enterScenario, the intro map, startScenario, match stats, endScenario
   ['66-menus-shop.js',    'function hideAllMenus(',              'play'],  // menus, the save menu, open/close map, the shop, the mirror, the loadout
   ['70-input.js',         'function requestPointerLock(',        'core'],  // pointer lock, keyboard and mouse, the gamepad

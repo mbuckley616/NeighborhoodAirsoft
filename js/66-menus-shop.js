@@ -54,7 +54,7 @@ function profileSummaryHTML() {
 // v1.231 (D.29, Michael: A on "What does the bed do, now the game saves itself?"): the bed shows the summer so far:
 // today's date off the calendar, the score against Seth's crew, and the next match on the ladder.
 function nextLadderMatchId() {
-  for (const z of ZONE_LADDER) {
+  for (const z of ladderZones()) {   // v1.486 (D.96): on into fall and winter once the summer is won
     if (!isZoneUnlocked(z.key)) break;
     const open = id => isScenarioUnlocked(id) && !Game.persist.completed[id];
     const ids = PIN_SCENARIO_GROUPS[z.key] || [], id = ids.find(id => open(id) && !isSideMatch(id)) || ids.find(open);   // v1.402: the main line first
@@ -67,7 +67,7 @@ function summerSoFarHTML() {
   const s = rivalScore();
   const nextId = nextLadderMatchId(), sc = nextId && SCENARIOS[nextId];
   const next = sc ? `${sc.scenarioName || sc.name || nextId} · ${sc.name || ''}`.replace(/ · $/, '')
-                  : 'Nothing left: the summer is won';
+                  : Game.persist.completed.winter_wk_snow_day ? 'Nothing left: the year is won' : 'Nothing left: the summer is won';   // v1.486 (D.96)
   const zone = day === SUMMER_BIG_DAY ? 'Bunratty Court' : summerZoneName(summerZoneKey());
   const row = (label, val) =>
     `<div style="display:flex;justify-content:space-between;gap:24px;padding:3px 0;">
@@ -164,7 +164,7 @@ function openMap() {
 function mapDefaultZone() {
   if (Game._mapZone && PIN_SCENARIO_GROUPS[Game._mapZone]) return Game._mapZone;
   let key = ZONE_LADDER[0].key;
-  for (const z of ZONE_LADDER) if (PIN_SCENARIO_GROUPS[z.key] && isZoneUnlocked(z.key)) key = z.key;
+  for (const z of ladderZones()) if (PIN_SCENARIO_GROUPS[z.key] && isZoneUnlocked(z.key)) key = z.key;   // v1.486: the seasons too
   return key;
 }
 
@@ -190,6 +190,7 @@ function refreshMapPinStates() {
       pin.classList.toggle('locked', !unlocked);
     }
   });
+  mapSeasonPinStates();   // v1.486 (D.96): in a Fall or Winter tab, that season's places
 }
 function closeMap() {
   document.getElementById('worldMap').classList.remove('active');

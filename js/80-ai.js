@@ -1007,7 +1007,7 @@ function kidLadderStep(e, tgt, dt) {
       if (otherOnLadder()) { faceYaw = Math.PI * (L.dirZ < 0 ? 1 : 0); }
       else { e.pos.x = L.x; e.pos.z = L.z; s.phase = 'up'; s.y = scenarioGroundY(L.x, L.z); Game.scenario.ladderReached = true; }   // v1.165
     } else {
-      const sp = Math.min(d, 2.6 * (ch.moveSpeed ?? 1.0) * dt), r = 0.33;
+      const sp = Math.min(d, 2.6 * (ch.moveSpeed ?? 1.0) * Season.moveMult * dt), r = 0.33;   // v1.487 (D.96): deep snow
       const bx = e.pos.x, bz = e.pos.z;
       let ux = dx / d, uz = dz / d;
       if (d > 1.2) {   // far from the foot: follow the field (near it, straight in)
@@ -1346,7 +1346,7 @@ function updateEnemies(dt) {
       // steer the way 60 fps does.
       const zSteps = Math.max(1, Math.ceil(dt * 60 - 1e-6)), zdt = dt / zSteps;
       for (let zi = 0; zi < zSteps; zi++) {
-        const speed = (e.zombieSprinter ? ZOMBIE_SPRINT_SPEED : ZOMBIE_JOG_SPEED) * (ch.moveSpeed ?? 1.0);
+        const speed = (e.zombieSprinter ? ZOMBIE_SPRINT_SPEED : ZOMBIE_JOG_SPEED) * (ch.moveSpeed ?? 1.0) * Season.moveMult;   // v1.487 (D.96): deep snow
         const zdxP = tgt.pos.x - e.pos.x, zdzP = tgt.pos.z - e.pos.z;
         const d = Math.hypot(zdxP, zdzP) || 1;
         const stepX = (zdxP / d) * speed * zdt;
@@ -1594,6 +1594,16 @@ function updateEnemies(dt) {
         e._lastSawPlayer = e._tracerSawAt;
         e._lastSeenPos = { x: e._tracerFrom.x, y: e._tracerFrom.y, z: e._tracerFrom.z };
         e._lastSeenHeadUp = null;
+      } else if (Season.prints && (e._trailT = (e._trailT || 0) + dt) > 0.5) {
+        // v1.487 (D.96): on his target's trail in the snow he knows where its newest print is, as if he'd seen him there
+        e._trailT = 0;
+        const fp = seasonTrailFor(e, tgt.ref);
+        if (fp && (!e._lastSawPlayer || fp.t > e._lastSawPlayer)) {
+          e._lastSawPlayer = fp.t;
+          e._lastSeenPos = { x: fp.x, y: fp.y, z: fp.z };
+          e._lastSeenHeadUp = null;
+          e._onTrail = fp;
+        }
       }
       // recentlySpotted = saw the player within the last RECENT_SPOT_WINDOW sec.
       // v1.36e: extended 1.8 → 3.2s so a kid who's seen you keeps pressuring the
@@ -1779,7 +1789,7 @@ function updateEnemies(dt) {
         // reach backyard anchors. If the player comes into range mid-deploy the
         // reactive-bail above kicks them straight into the fight, so a kid still
         // working around a house never reads as "stuck" for long.
-        const deploySpeed = 2.6 * (ch.moveSpeed ?? 1.0);
+        const deploySpeed = 2.6 * (ch.moveSpeed ?? 1.0) * Season.moveMult;   // v1.487 (D.96): deep snow
         // v1.481: walking out of patience, by the kids' route grid (round the houses), not straight at the spot
         const pw = e._patF ? kidFieldNext(e._patF, e.pos.x, e.pos.z) : null;
         const sx = pw ? pw.x - e.pos.x : dxd, sz = pw ? pw.z - e.pos.z : dzd, sl = Math.hypot(sx, sz) || 1;
@@ -1938,7 +1948,7 @@ function updateEnemies(dt) {
         {
           const baseSpeed = 3.5;
           const sprintMult = aggression >= 0.75 ? 2.0 : 1.0;
-          const speed = baseSpeed * (ch.moveSpeed ?? 1.0) * sprintMult;
+          const speed = baseSpeed * (ch.moveSpeed ?? 1.0) * Season.moveMult * sprintMult;   // v1.487 (D.96): deep snow
           const rawDx = tgt.pos.x - e.pos.x;
           const rawDz = tgt.pos.z - e.pos.z;
           const rawD = Math.hypot(rawDx, rawDz) || 1;
@@ -2615,7 +2625,7 @@ function updateEnemies(dt) {
             // Mirror the deploying/advancing movers: try the diagonal step, else
             // slide on X-only then Z-only, with a short anti-wedge bail.
             const baseSpeed = 2.5;
-            const speed = baseSpeed * (ch.moveSpeed ?? 1.0);
+            const speed = baseSpeed * (ch.moveSpeed ?? 1.0) * Season.moveMult;   // v1.487 (D.96): deep snow
             const kidRadius = 0.35;
             const stepX = (dx / d) * speed * dt;
             const stepZ = (dz / d) * speed * dt;
@@ -2684,7 +2694,7 @@ function updateEnemies(dt) {
           break;
         }
         // Retreat jog — a touch quicker than a normal advance (they're bailing).
-        const retreatSpeed = 3.2 * (ch.moveSpeed ?? 1.0);
+        const retreatSpeed = 3.2 * (ch.moveSpeed ?? 1.0) * Season.moveMult;   // v1.487 (D.96): deep snow
         const stepX = (dxb / db) * retreatSpeed * dt;
         const stepZ = (dzb / db) * retreatSpeed * dt;
         const kidRadius = 0.35;

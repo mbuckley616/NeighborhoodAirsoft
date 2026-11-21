@@ -103,9 +103,10 @@ let _bdIcosa = null;   // unit icosahedron, as a flat triangle list
 // v1.361 (B.18, Michael 27 Oct: "I don't want it to overlap with the summer theme - maybe we park that & a Christmas theme
 // for later expansions"): parked. No holiday look by the date or from the Pickup Game board while `parked` is set; the code
 // stays for a later expansion, and the tests still reach it with `force` (or by clearing `parked`).
-const Holiday = { force: null, match: null, parked: true };   // 'halloween' or 'none' sets it whatever the date (force: tests; match: v1.352, the board); null: by date
+const Holiday = { force: null, match: null, parked: true, chapter: null };   // 'halloween' or 'none' sets it whatever the date (force: tests; match: v1.352, the board); null: by date
 function holidayNow(date) {
   if (Holiday.force) return Holiday.force === 'none' ? null : Holiday.force;
+  if (Holiday.chapter) return Holiday.chapter;   // v1.486 (D.96): a season match that is a holiday (Halloween Night), parked or not
   if (Holiday.parked) return null;   // v1.361: parked (B.18)
   if (Holiday.match) return Holiday.match === 'none' ? null : Holiday.match;   // v1.352: a Pickup Game's Holiday row
   return holidayByDate(date);

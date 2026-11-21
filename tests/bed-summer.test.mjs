@@ -55,7 +55,8 @@ const c = await open();
 check('with the rest won, the last Saturday is next', end === 'last_saturday' && c.text.includes('The Last Saturday'), { end, text: c.text });
 await page.evaluate(() => { Game.persist.completed.last_saturday = true; });
 const d = await open();
-check('the last Saturday won: Saturday 30 August, Bunratty Court, nothing left', /Today\s*Saturday 30 August 2003/.test(d.text) && /Where\s*Bunratty Court/.test(d.text) && d.text.includes('the summer is won'), d.text);
+// v1.486 (D.96): the fall comes after the summer, so the bed's Next is the fall's first match (was "the summer is won")
+check('the last Saturday won: Saturday 30 August, Bunratty Court, and next the fall\'s first match', /Today\s*Saturday 30 August 2003/.test(d.text) && /Where\s*Bunratty Court/.test(d.text) && /Next\s*First Saturday Back/.test(d.text), d.text);
 check('every rival match beaten by then', (() => { const m = d.text.match(/(\d+) of (\d+) beaten/); return m && m[1] === m[2]; })(), d.text);
 
 check('no page errors', g.errs.length === 0, g.errs);

@@ -36,7 +36,7 @@ const turned = await page.evaluate(() => {
     for (const crew of [crewFirstTime(id), CREW_ROSTER.slice()]) {
       Game.persist.crew = crew;
       const s = crewSetup(id), ours = s.filter(e => e.team === 'player'), theirs = s.filter(e => e.team !== 'player');
-      out.push({ id, crew: crew.length, first: crew.length < 5 || crewFirstTime(id).length === 5, ours: ours.map(e => e.charId).join(), theirs: theirs.length,
+      out.push({ id, season: !!SCENARIOS[id].season, crew: crew.length, first: crew.length < 5 || crewFirstTime(id).length === 5, ours: ours.map(e => e.charId).join(), theirs: theirs.length,
         own: SCENARIOS[id].enemySetup.length, posts: ours.every(e => SCENARIOS[id].crewPosts.includes(e.anchor)),
         noCrewThere: !theirs.some(e => crew.includes(e.charId)) });
     }
@@ -45,8 +45,10 @@ const turned = await page.evaluate(() => {
   return out;
 });
 const badTurned = turned.filter(t => !t.posts || !t.noCrewThere || t.ours.split(',').length < t.crew || t.theirs < t.own || (t.first && t.theirs < t.ours.split(',').length + 1));
-check(`the ${turned.length / 2} solo matches turned crew: your crew at the match's posts, none of them on the other side, their side at least yours the first time through`,
-  turned.length === 24 && badTurned.length === 0, badTurned.length ? badTurned : turned.filter(t => t.crew === 5).map(t => `${t.id} ${t.ours.split(',').length + 1}v${t.theirs}`));
+// v1.490 (D.96): the fall's and winter's copies of these (SEASON_CHAPTERS) are held to the same rule; the summer's are still 12
+const summerTurned = turned.filter(t => !t.season).length / 2, seasonTurned = turned.filter(t => t.season).length / 2;
+check(`the ${summerTurned} solo matches turned crew (+ ${seasonTurned} in the fall and winter): your crew at the match's posts, none of them on the other side, their side at least yours the first time through`,
+  summerTurned === 12 && seasonTurned >= 1 && badTurned.length === 0, badTurned.length ? badTurned : turned.filter(t => t.crew === 5).map(t => `${t.id} ${t.ours.split(',').length + 1}v${t.theirs}`));
 
 // Each map card shows its chip; the briefing shows its line
 const cards = await page.evaluate(() => {

@@ -11,6 +11,8 @@ function enterScenario(scenarioId) {
   const sc = (Net.active && Net.coop && coopScenario(scenarioId)) || crewScenario(scenarioId);   // v1.274 (D.28 step 2): the match with your crew in it (v1.381, D.73: and your friend)
   // v1.352 (D.70 step 3): a Pickup Game's Holiday row holds for its match (houses and kids); every other match goes by the date
   Holiday.match = (sc && sc.pickup && PICKUP_HOLIDAYS.includes(sc.pickup.holiday) && sc.pickup.holiday !== 'date') ? sc.pickup.holiday : null;
+  Holiday.chapter = (sc && sc.season && sc.holiday) || null;   // v1.486 (D.96): Halloween Night brings the parked Halloween back for itself
+  Season.now = seasonOf(sc);   // v1.489 (D.96): before the build, so the kids a scene builder makes dress for the season
   let built;
   // v1.35: time-of-day for this scenario ('day' default | 'night'), hoisted to
   // function scope so the night-flashlight pass below can read it.
@@ -32,6 +34,7 @@ function enterScenario(scenarioId) {
     built = withSeededRandom(_seedKey, () => builder(sc.builderArg || undefined, _tod));
     addEdgeBackdrop(built, sc.builderFn, _tod);   // v1.252 (D.24): scenery past the edge, never solid
     addHolidayDecor(built, _tod);   // v1.350 (D.70): Halloween on the houses round its date, never solid
+    applySeasonLook(built, seasonOf(sc), _tod, scenarioId);   // v1.485 (D.96): fall or winter over the map; the summer passes untouched
     Game.camera.far = built.viewFar || 200; Game.camera.updateProjectionMatrix();   // v1.303 (D.51): a real-scale map sees further
   } else {
     showModal('Coming Soon', 'This scenario is locked in v1. More coming in future builds.');

@@ -1,6 +1,7 @@
 function isRivalMatch(id) {
   const sc = SCENARIOS[id];
   if (!sc || sc.tutorial || sc.ffa || sc.winCondition === 'survive_untagged' || !findScenarioListContext(id)) return false;
+  if (sc.season) return false;   // v1.486 (D.96): the score is the summer's; fall and winter matches don't count in it
   return (sethSetup(id) || []).some(es => es.charId === 'seth' && es.team !== 'player');   // v1.362: his zone matches too
 }
 function rivalMatchIds() { return Object.keys(SCENARIOS).filter(isRivalMatch); }
