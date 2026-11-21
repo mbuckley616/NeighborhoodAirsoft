@@ -123,7 +123,7 @@ for (const id of IDS) {
       });
     }
     spawnEnemyBB = o; applyBBHit = orig;
-    return { defend, won: !!Game.scenario.winByTimer, team, secs: Math.round((f - 1) / 60), shots, firstShot, nearest: +nearest.toFixed(1), lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'), playerHits,
+    return { defend, won: !!Game.scenario.winByTimer, team, secs: Math.round((f - 1) / 60), roundSecs: +Game.scenario.roundTime.toFixed(2), shots, firstShot, nearest: +nearest.toFixed(1), lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'), playerHits,
       enemyLives: kids.filter(k => k.team === 'enemy').reduce((a, k) => a + k.maxLives, 0),
       kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, maxZ: +st[i].maxZ.toFixed(1), minX: +st[i].minX.toFixed(1), minD: +st[i].minD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state })) };
   });
@@ -136,7 +136,10 @@ for (const id of IDS) {
   if (r.team) check(`${id}: both sides lose lives (within 120 s), or one side has lost every life`,
     r.lostEnemy > 0 && (r.lostAlly > 0 || r.lostEnemy >= r.enemyLives), r);
   else if (r.defend) {
-    check(`${id}: the timer runs out and the player holds (90 s)`, r.won && r.secs >= 89 && r.secs <= 91, r);
+    // Tests fix (play builder, 21 Nov; red on main alone and beside other suites, 88 s): the round's 90 s timer also
+    // ticks in the page's own frames between BEGIN and this loop (2.05-2.15 s here), so the loop's frames read 88 when
+    // it ran out on time. The check reads the round's own clock (`Game.scenario.roundTime`), as v1.189's shot stamp does.
+    check(`${id}: the timer runs out and the player holds (90 s)`, r.won && r.roundSecs >= 89 && r.roundSecs <= 91, r);
     check(`${id}: an attacker reaches the fort (within 5 m of the player)`, r.kids.some(k => k.t !== 'player' && k.minD < 5), r.kids);
     // Tests fix (maps builder, 10 Nov; CI red on 860fb99): since D.57 four of your crew hold the fort beside you, and
     // in about 1 round in 10 they keep every attacker off its back for all 90 s (locally the first one got round at
