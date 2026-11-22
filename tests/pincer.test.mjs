@@ -34,7 +34,8 @@ for (let r = 0; r < 2; r++) {
 // v1.368 (D.58): Priya leaves every match and every list; Joe and Chris, two Bunratty kids, take her places, each
 // with his own looks, numbers and lines; Mitchell is Protect Ryan's red VIP. Each match they are in builds and plays.
 const d58 = await page.evaluate(() => {
-  const where = id => Object.entries(SCENARIOS).filter(([, sc]) => (sc.enemySetup || []).some(e => e.charId === id)).map(([k]) => k);
+  // v1.486 (D.96): the summer's places; the fall's and winter's copies of a match (`season`) carry the same kids
+  const where = id => Object.entries(SCENARIOS).filter(([, sc]) => !sc.season && (sc.enemySetup || []).some(e => e.charId === id)).map(([k]) => k);
   const kid = id => { const c = CHARACTERS[id], k = createKid(c, 'pistol');
     return { street: c.street, h: c.height, b: c.build, hair: c.hairStyle, agg: c.aggression, acc: c.accuracy, spd: c.moveSpeed, scale: +k.group.scale.y.toFixed(2),
       lines: ['playerHit', 'npcHit', 'playerSpotted', 'taunt'].map(cat => voiceLinePools(id, cat).own.length) }; };

@@ -246,7 +246,8 @@ check('the Hollow: at most 1,450 draw calls in any of five views', Math.max(...O
 // it, at any height a kid shoots or looks from (the night rule, Michael A on Lamplight, 15 Oct; the taggers of
 // Infection carry no guns). The free-for-alls' starts are tests/ffa-starts'. Since v1.355 the maps have 29: the Downhill
 // Derby (`bunratty_go_cart`) is a race past kids posted down the lane, not two sides, so its starts are not a side's.
-const ids28 = await page.evaluate(() => Object.keys(SCENARIOS).filter(k => ['buildBunrattyCourtScene', 'buildHollowScene'].includes(SCENARIOS[k].builderFn)));
+// v1.486 (D.96): the summer's 29; the fall's and winter's copies on these maps (`season`) are left to the stuck sweeps
+const ids28 = await page.evaluate(() => Object.keys(SCENARIOS).filter(k => !SCENARIOS[k].season && ['buildBunrattyCourtScene', 'buildHollowScene'].includes(SCENARIOS[k].builderFn)));
 const m28 = [];
 for (const id of ids28) {
   const e0 = g.errs.length;

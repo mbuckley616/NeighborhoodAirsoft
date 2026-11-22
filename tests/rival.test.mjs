@@ -83,6 +83,8 @@ const cal = await page.evaluate(() => {
   const done = { winnmark_tutorial: true };
   for (const z of ZONE_LADDER) for (const id of PIN_SCENARIO_GROUPS[z.key]) { done[id] = true; if (id === 'hollow_big_battle') break; }
   for (const id of PIN_SCENARIO_GROUPS.winnmark_court) done[id] = true;
+  // v1.490 (D.96): with the Last Saturday won the wall calendar turns to the fall, so this summer stops short of it
+  delete done[SUMMER_FINALE];
   Game.persist.completed = done;
   const days = rivalWinDays();
   const want = [...new Set(rivalMatchIds().filter(id => done[id]).map(summerDayAfter))];

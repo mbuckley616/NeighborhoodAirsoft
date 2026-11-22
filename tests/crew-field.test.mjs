@@ -21,14 +21,18 @@ const same = await page.evaluate(() => {
   const soloChanged = solo.filter(id => cast(crewSetup(id)) !== cast(sethSetup(id)));
   const team = ids.filter(crewTeamMatch);
   Game.persist.crew = [];
-  return { empty, n: ids.length, solo: solo.length, soloChanged, team: team.length,
+  // v1.486 (D.96): the fall's and winter's matches (`season`) are counted apart; the summer's numbers stay as they were
+  const summer = id => !SCENARIOS[id].season;
+  return { empty, n: ids.length, solo: solo.filter(summer).length, soloChanged, team: team.filter(summer).length,
+    seasonTeam: team.filter(id => !summer(id)).length, seasonSolo: solo.filter(id => !summer(id)).length,
     tut: crewTeamMatch('winnmark_tutorial'), jugg: crewTeamMatch('hollow_juggernaut'), out: crewTeamMatch('bunratty_team_2v4') };
 });
 check(`a new game: every match tuned for nobody in your crew (of ${same.n}) plays its own sides`, same.empty.length === 0, same.empty);
 check(`with all five in, the ${same.solo} solo matches (the tutorial among them) still play alone`, same.soloChanged.length === 0 && !same.tut, same.soloChanged);
 // 32 since v1.318's Night Swim (the twins on your side at the pool); 46 since v1.393 (D.57 step 1): + the 12 solo matches
 // your crew now plays and the 2 CLUTCH ones (`crewPosts`), so 32 solo matches are left, none changed by the crew
-check(`${same.team} team matches take the crew, Juggernauts and Two Against the World among them`, same.team === 46 && same.solo === 32 && same.jugg && same.out, same);
+// v1.486 (D.96): the 46 and 32 are the summer's; the fall and winter add 22 team matches and 2 solo ones
+check(`${same.team} team matches take the crew (+ ${same.seasonTeam} in the fall and winter), Juggernauts and Two Against the World among them`, same.team === 46 && same.solo === 32 && same.seasonTeam >= 1 && same.jugg && same.out, same);
 
 const sides = (id, crew, bench) => page.evaluate(([id, crew, bench]) => {
   Game.persist.crew = crew; crewBench.clear(); (bench || []).forEach(k => crewBench.add(k));
