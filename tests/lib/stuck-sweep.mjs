@@ -21,7 +21,7 @@ const KNOWN = [
   // v1.154: Bunratty free-for-all's Nick by house 2's backyard, fixed (tests/fence-bound.test.mjs)
 ];
 
-export const PARTS = 16;   // v1.166: was 8
+export const PARTS = 20;   // v1.166: was 8; 22 Nov 2026: was 16 (the fall and winter's 23 matches, D.96)
 export async function sweep(part) {
   const g = await boot(process.env.SRC ? { src: process.env.SRC } : {}); const { page } = g;
   await g.bedroom();
@@ -36,6 +36,8 @@ export async function sweep(part) {
   // v1.153 fix-up: eight parts, not four. Part 1 of four took over 10 min on CI (330 s here), run.mjs stopped it at its
   // 10-minute limit, and the browser closed under the sweep. Eighths take half that, two to a CI shard.
   // v1.166: sixteenths, for the same limit, now that each match is watched about 2.2 times as long.
+  // 22 Nov 2026: twentieths. v1.486 (D.96) took the matches from 79 to 102, and on the weekly run of 5bb6828
+  // stuck-sweep-3 ran into run.mjs's 10 minutes and the browser closed under it.
   else ids = ids.filter((_, i) => i % PARTS === part - 1);
 
   const SWEEP = (walk) => page.evaluate(({ walk, SECS, LIMIT }) => {

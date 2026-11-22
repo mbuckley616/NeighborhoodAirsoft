@@ -14,7 +14,8 @@ export const SMOKE = ['smoke', 'autosave', 'map-screen', 'pause-menu'];
 const DOCS = f => f.startsWith('docs/') || (f.endsWith('.md') && !f.startsWith('.github/') && !f.startsWith('tests/'));
 // the weekly run's ten shards take about 24 minutes of suites each (40-minute job limit, installs of 3-11 minutes); a pull
 // request's few suites go in short shards so it reports in minutes
-export const FULL_SHARDS = 10; const SOME_SHARD_SECS = 6 * 60;
+// 22 Nov 2026: twelve full shards, was ten (the weekly run's shards 1 and 10 hit the 40-minute limit)
+export const FULL_SHARDS = 12; const SOME_SHARD_SECS = 6 * 60;
 
 const git = (...a) => execFileSync('git', a, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
 // files are read at `head` (HEAD on CI), so the selector can be measured against any past branch without checking it out

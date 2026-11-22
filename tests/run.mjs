@@ -61,6 +61,9 @@ const WEIGHTS = {
   'stuck-sweep-16.test.mjs': 469, 'stuck-sweep-2.test.mjs': 430, 'stuck-sweep-3.test.mjs': 365,
   'stuck-sweep-4.test.mjs': 262, 'stuck-sweep-5.test.mjs': 502, 'stuck-sweep-6.test.mjs': 485,
   'stuck-sweep-7.test.mjs': 334, 'stuck-sweep-8.test.mjs': 484, 'stuck-sweep-9.test.mjs': 433, 'taggers.test.mjs': 46,
+  // 22 Nov 2026: the sweep's four new parts and the fall and winter's spawn checks, guessed from their neighbours
+  'stuck-sweep-17.test.mjs': 380, 'stuck-sweep-18.test.mjs': 380, 'stuck-sweep-19.test.mjs': 380,
+  'stuck-sweep-20.test.mjs': 380, 'crew-spawn-bounds-seasons.test.mjs': 420,
   'texts.test.mjs': 15, 'tops.test.mjs': 45, 'treehouse.test.mjs': 36, 'treehouse-evan.test.mjs': 30,
   'treehouse-hold.test.mjs': 24, 'treehouse-start.test.mjs': 27, 'under-parts.test.mjs': 250,
   'utility-belt.test.mjs': 17, 'vip.test.mjs': 179, 'vip-spawn.test.mjs': 145, 'voice-situations.test.mjs': 23,
