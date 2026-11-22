@@ -12,12 +12,15 @@
 // run.mjs's 10 minutes (it took 608 s for 32 on CI).
 import { boot, check } from './lib/game.mjs';
 const POSTS = !!globalThis.CSB_POSTS;
+// v1.486 (D.96): the fall's and winter's team matches (`season`) run the same checks in
+// tests/crew-spawn-bounds-seasons.test.mjs (CSB_SEASON), posts or not: added here they would push a suite past 10 minutes
+const SEASON = !!globalThis.CSB_SEASON;
 const g = await boot(); const { page } = g;
 await g.bedroom();
 await g.spin(3);
 
 const ALL = ['eric', 'sean', 'nick', 'alex', 'diego'];
-const ids = await page.evaluate(posts => Object.keys(SCENARIOS).filter(id => crewTeamMatch(id) && !!SCENARIOS[id].crewPosts === posts).sort((a, b) => crewLadderPos(a) - crewLadderPos(b)), POSTS);
+const ids = await page.evaluate(([posts, season]) => Object.keys(SCENARIOS).filter(id => crewTeamMatch(id) && !!SCENARIOS[id].season === season && (season || !!SCENARIOS[id].crewPosts === posts)).sort((a, b) => crewLadderPos(a) - crewLadderPos(b)), [POSTS, SEASON]);
 const out = [], near = [];
 for (const crew of ['all', 'first']) for (const id of ids) {
   await page.evaluate(([all, crew, id]) => { Game.persist.crew = crew === 'all' ? all.slice() : crewFirstTime(id); Game.persist.completed = {}; crewBench.clear(); }, [ALL, crew, id]);
@@ -59,7 +62,7 @@ for (const crew of ['all', 'first']) for (const id of ids) {
 }
 const bad = out.filter(r => r.out.length);
 console.log('   allies with all five:', JSON.stringify(Object.fromEntries(out.map(r => [r.id, r.allies]))));
-check(`${ids.length} team matches entered with all five in the crew`, ids.length === (POSTS ? 14 : 32) && /* v1.318: + Night Swim */ out.every(r => r.kids > 0), ids.length);
+check(`${ids.length} team matches entered with all five in the crew`, (SEASON ? ids.length >= 1 : ids.length === (POSTS ? 14 : 32)) && /* v1.318: + Night Swim */ out.every(r => r.kids > 0), ids.length);
 check('every kid starts inside the field in every one', bad.length === 0, bad);
 check('no two kids start under 1.4 m apart (all five, and the first-time crew; 1.0 m beside the huddle, 0.75 m inside it), nor two of one side hold one post', near.length === 0, near);
 

@@ -20,7 +20,8 @@ const info = await page.evaluate(([SCHOOL, IDS]) => {
   // where every school kid plays, and who plays at the school
   const playsAt = {}, enemiesAt = {}, alliesAt = {};
   for (const [sid, sc] of Object.entries(SCENARIOS)) for (const e of sc.enemySetup || []) {
-    if (SCHOOL.includes(e.charId)) (playsAt[e.charId] = playsAt[e.charId] || []).push(sid);
+    // v1.486 (D.96): the fall's school matches (`season`) are at the school too, so they count as the school
+    if (SCHOOL.includes(e.charId) && !(sc.season && sc.builderFn === SCENARIOS[IDS[0]].builderFn)) (playsAt[e.charId] = playsAt[e.charId] || []).push(sid);
     if (IDS.includes(sid)) ((e.team === 'player' ? alliesAt : enemiesAt)[sid] = (e.team === 'player' ? alliesAt : enemiesAt)[sid] || []).push(e.charId);
   }
   const twinStats = { jordan: 'tyler', caleb: 'ryan', nathan: 'mitchell', grant: 'owen', malik: 'jamie' };

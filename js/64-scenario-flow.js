@@ -54,6 +54,15 @@ function enterScenario(scenarioId) {
   } else if (built.spawn) {
     playerSpawnPos = built.spawn.clone();
   }
+  // v1.491 (the weekly run's crew-spawn-bounds-posts red): nudged out of any obstacle here, as the start is below (v1.28k),
+  // so the crew spreads round where you will stand. In Take the North Fort the fort's back wall moved you 0.26 m after
+  // they were placed, and Nick started 1.37 m from you, inside the 1.4 m every start keeps (v1.277).
+  if (playerSpawnPos && built.obstacles) {
+    const ps = sc.playerSpawn && built.playerSpawns && built.playerSpawns[sc.playerSpawn];
+    const y = ps ? (ps.y != null ? ps.y : ps.pos.y) : playerSpawnPos.y;
+    const cleared = findClearSpawn(playerSpawnPos.x, playerSpawnPos.z, built.obstacles, 0.4, (built.spawnFootY || y > 0.01) ? y : null);
+    playerSpawnPos.x = cleared.x; playerSpawnPos.z = cleared.z;
+  }
 
   // === v1.9: scenario-level enemy setup (when scenario declares enemySetup) ===
   // If the scenario has an `enemySetup` array, we ignore any pre-spawned enemies
