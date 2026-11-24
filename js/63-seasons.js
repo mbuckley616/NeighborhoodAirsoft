@@ -252,6 +252,8 @@ function seasonStep(dt) {
 // (`SEASON_LADDER`, 90-progression): Fall opens when the Last Saturday is won, Winter when the fall's last match is.
 // The summer's own matches are not touched.
 // ----------------------------------------------------------------------
+// v1.492: three cards' lines say what the weather does (v1.487's wind, deep snow and prints), not ice or leaves the
+// kids can hear, which the game doesn't have (critic, 24 Nov).
 const SEASON_CHAPTERS = [
   { season: 'fall', name: 'Fall 2003', zones: [
     { key: 'fall_winnmark', pin: 'winnmark_court', name: 'Winnmark Court', region: 'horseshoe_bend', when: 'September', matches: [
@@ -264,7 +266,7 @@ const SEASON_CHAPTERS = [
     ] },
     { key: 'fall_hollow', pin: 'hollow', name: 'The Hollow · Chattahoochee', region: 'east_roswell', when: 'late September', matches: [
       { id: 'fall_hw_leaves', base: 'hollow_skirmish_3v3', scenarioName: 'Leaves Underfoot',
-        desc: "The woods are loud now: every step crunches. Your crew's with you against Seth's side. They'll hear you coming, but you'll hear them too." },
+        desc: "The woods have gone orange and the wind's up: watch which way the leaves blow, because a long shot drifts that way too. Your crew's with you against Seth's side." },
       { id: 'fall_hw_north_fort', base: 'hollow_attack_north_fort', scenarioName: 'The North Fort in October',
         desc: "Mitchell's lot took the north fort back over the summer's end. The trees are thinner, so you can see them better, and they can see you." },
       { id: 'fall_hw_big', base: 'hollow_big_battle', scenarioName: 'The Fall Big Game',
@@ -292,7 +294,7 @@ const SEASON_CHAPTERS = [
       { id: 'winter_bn_first_snow', base: 'bunratty_team_2v1', scenarioName: 'First Snow',
         desc: "It actually snowed. Not much, but enough. Nick's with you against Sean's side, before it melts." },
       { id: 'winter_bn_storm', base: 'bunratty_storm_the_court', scenarioName: 'Storm the Snowy Court',
-        desc: "Mitchell's side have dug in at the cul-de-sac. Go take it. Stay off the ice on the driveways." },
+        desc: "Mitchell's side have dug in at the cul-de-sac. Go take it. The snow's deep, so it's a slow push up the court." },
       { id: 'winter_bn_crew', base: 'bunratty_team_4v4', scenarioName: 'Christmas Break', holiday: 'christmas',
         desc: "No school for two weeks. Mitchell's whole crew is out in their new coats, and so is yours." },
     ] },
@@ -316,7 +318,7 @@ const SEASON_CHAPTERS = [
       { id: 'winter_wk_short', base: 'winnmark_team_2v3', scenarioName: 'Cold Hands',
         desc: "Seth's with you against Trey, Brooke and Jamie's side. Gloves make the trigger hard to find." },
       { id: 'winter_wk_treehouse', base: 'winnmark_defend_treehouse', scenarioName: 'The Treehouse in the Snow',
-        desc: "Marcus and Jamie want the treehouse, and its ladder is icy. Hold it till the timer's done." },
+        desc: "Marcus and Jamie want the treehouse. Hold it till the timer's done, and mind your tracks: they'll follow your prints in the snow." },
       { id: 'winter_wk_snow_day', base: 'winnmark_team_3v3', scenarioName: 'Snow Day',
         desc: "School's cancelled. The whole court's white and everybody's out. Seth and Trey are with you against Brooke, Jamie and Marcus's side, one last game before it melts." },
     ] },
