@@ -30,6 +30,7 @@ const shootBlock = (n) => page.evaluate((n) => {
   const o = Game.player.obstacles.find(o => o.snowFort && o.snowFort.stage < 2) || Game.player.obstacles.find(o => o.mesh && o.mesh.userData && o.mesh.userData.cardboardBox);
   if (!o) return null;
   for (const e of Game.scenario.enemies) e._graceT = 99;
+  Game.scenario.bbs.length = 0;   // v1.492: a kid's BB still in the air from the walk above can hit the block too (15 hits for 14)
   const cx = (o.minX + o.maxX) / 2, cz = (o.minZ + o.maxZ) / 2, y = (o.baseY || 0) + Math.min(0.4, o.h * 0.4);
   const from = new THREE.Vector3(cx - ((o.maxX - o.minX) / 2 + 1.2), y, cz);
   let swallowed = 0;
@@ -77,6 +78,21 @@ console.log('   ' + JSON.stringify({ wSummer, wFall, wRule }));
 check('the summer has no wind: a BB at 30 m/s goes straight', wSummer.wind === null && wSummer.m30 < 0.01, wSummer);
 check('a fall day is windy: a shot drifts under 10 cm by 10 m and over 40 cm by 30 m', wFall.wind && wFall.m10 < 0.1 && wFall.m30 > 0.4, wFall);
 check('the same match has the same wind every time (another match another); a fall night, the summer and winter are calm', wRule.same && wRule.differs && wRule.night === null && wRule.summer === null && wRule.winter === null && wRule.mult === 1 && wRule.wmult === 0.85, wRule);
+
+// v1.492 (critic, 24 Nov): the cards promise only weather the game has. No card speaks of ice or of leaves the kids hear;
+// each card that names the wind, the deep snow or the prints is a match where seasonWeather turns that on.
+const cards = await page.evaluate(() => SEASON_CHAPTERS.flatMap(ch => ch.zones.flatMap(z => z.matches.map(m => {
+  const sc = SCENARIOS[m.id], tod = sc.timeOfDay === 'night' ? 'night' : 'day';
+  seasonWeather(null, ch.season, tod, m.id);
+  const r = { id: m.id, desc: m.desc, wind: !!Season.wind, slow: Season.moveMult < 1, prints: ch.season === 'winter' };
+  seasonWeather(null, null, 'day', null);
+  return r;
+}))));
+const false_ = cards.filter(c => /\bice\b|\bicy\b|crunch|hear you/i.test(c.desc)).map(c => c.id);
+const windy = cards.filter(c => /\bwind\b/i.test(c.desc)), deep = cards.filter(c => /snow's deep/i.test(c.desc)), tracks = cards.filter(c => /prints/i.test(c.desc));
+console.log('   ' + JSON.stringify({ false_, windy: windy.map(c => c.id + ':' + c.wind), deep: deep.map(c => c.id + ':' + c.slow), tracks: tracks.map(c => c.id + ':' + c.prints) }));
+check('no season card promises ice or leaves the kids can hear', cards.length === 24 && false_.length === 0, false_);
+check('the cards that name the wind, the deep snow or the prints are matches that have them', windy.length > 0 && windy.every(c => c.wind) && deep.length > 0 && deep.every(c => c.slow) && tracks.length > 0 && tracks.every(c => c.prints), { windy, deep, tracks });
 
 await g.scenario('winter_wk_short');
 const sWinter = await page.evaluate(() => Season.moveMult);
