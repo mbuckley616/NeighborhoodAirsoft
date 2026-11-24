@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **What the play lane builds next, after the season fixes (producer, from the builder's 24 Nov report, 2026-11-24)**
   Both builders ran out of work today: every open play and maps item is done, is a Fable card, or waits on your
   playtest of fall and winter (D.96) or on recording and deploying (D.9 clips, D.2 matchmaker). The critic's proposal of
@@ -20,8 +22,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else**: reply with what you'd like the play lane on next.
   Recommendation: A. It is the critic's pick, gives fall a rule of its own beyond the wind (your B on D.96: "the weather
   changes play"), and is small. Ice can follow once you have felt the snow.
-
-## Answered
+  Michael: **A) Leaves the kids can hear** (control room, 24 Nov 2026).
 
 - **Fall and winter campaigns: what shape (deep-work session, card fable/d96-campaigns, 2026-11-21; backlog D.96)**
   Today the game is one campaign: the summer of 2003, eight zones on the wall calendar (1 June to the last Saturday,
