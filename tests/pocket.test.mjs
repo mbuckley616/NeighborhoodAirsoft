@@ -38,5 +38,43 @@ for (const flank of [0, 1, -1]) {
 const c = await run(0, false);
 console.log('  open ground', JSON.stringify(c));
 check('open ground: he walks straight in, no back-off', c.escapedAt != null && c.escapedAt < 1 && c.backFrames === 0, c);
+// v1.493 (critic, 24 Nov): the route field is filled nearest-first off a heap, each cell settled once. On Hollins Ridge's
+// field the old first-in-first-out fill pushed each free cell about 104 times, 108-147 ms a call, and the night match
+// hitched. The field must come out exactly as the old fill's (copied here as the reference), and in a few milliseconds.
+await g.scenario('school_night_4v4');
+const hs = await page.evaluate(() => {
+  function refFill(gx, gz) {
+    const { b, nx, nz, free } = kidFreeCells(), c = LADDER_CELL;
+    const dist = new Float32Array(nx * nz).fill(Infinity);
+    const fi = Math.max(0, Math.min(nx - 1, Math.round((gx - b.minX) / c))), fk = Math.max(0, Math.min(nz - 1, Math.round((gz - b.minZ) / c)));
+    const q = [fi * nz + fk]; dist[q[0]] = 0;
+    for (let h = 0; h < q.length; h++) {
+      const cur = q[h], i = (cur / nz) | 0, k = cur % nz;
+      for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) {
+        if (!di && !dk) continue;
+        const ii = i + di, kk = k + dk;
+        if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
+        const n = ii * nz + kk;
+        if (!free[n] || (di && dk && (!free[ii * nz + k] || !free[i * nz + kk]))) continue;
+        const nd = dist[cur] + (di && dk ? 1.414 : 1);
+        if (nd < dist[n]) { dist[n] = nd; q.push(n); }
+      }
+    }
+    return dist;
+  }
+  const goals = [Game.player.pos, ...(Game.scenario.enemies || []).slice(0, 4).map(e => e.pos)];
+  let diff = 0, reached = 0, ms = 0;
+  for (const p of goals) {
+    const R = refFill(p.x, p.z), t = performance.now(), F = kidFieldTo(p.x, p.z); ms += performance.now() - t;
+    for (let j = 0; j < R.length; j++) {
+      if (R[j] === Infinity || F.dist[j] === Infinity) { if (R[j] !== F.dist[j]) diff = Infinity; continue; }
+      reached++; diff = Math.max(diff, Math.abs(R[j] - F.dist[j]));
+    }
+  }
+  return { goals: goals.length, reached, diff, perCallMs: +(ms / goals.length).toFixed(1) };
+});
+console.log('  Hollins Ridge field', JSON.stringify(hs));
+check('the route field on Hollins Ridge equals the old fill, cell for cell', hs.reached > 50000 && hs.diff === 0, hs);
+check('a route field on Hollins Ridge takes under 40 ms (the old fill took 108-147)', hs.perCallMs < 40, hs);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

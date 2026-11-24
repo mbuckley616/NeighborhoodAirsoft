@@ -858,20 +858,54 @@ function ladderField(L) {
   const dist = new Float32Array(nx * nz).fill(Infinity), free = new Uint8Array(nx * nz);
   for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) free[i * nz + k] = collidesObstacles(b.minX + i * c, b.minZ + k * c, 0.33) ? 0 : 1;
   const fi = Math.round((L.x - b.minX) / c), fk = Math.round((L.z - b.minZ) / c);
-  const q = [fi * nz + fk]; dist[q[0]] = 0; free[q[0]] = 1;
-  for (let h = 0; h < q.length; h++) {
-    const cur = q[h], i = (cur / nz) | 0, k = cur % nz;
+  free[fi * nz + fk] = 1;
+  kidFieldFill(nx, nz, free, dist, fi * nz + fk);
+  return (L._field = { b, nx, nz, dist });
+}
+// v1.493 (critic, 24 Nov): the fill behind ladderField and kidFieldTo. It was a first-in-first-out queue that pushed a
+// cell again each time its distance improved: 104 pushes a free cell on Hollins Ridge's field, 108-147 ms a call, and
+// v1.429's once-a-second check calls it about once a second a kid, so the night match hitched (worst steps 200-520 ms).
+// Now each cell is settled once, nearest first, off a binary heap (Dijkstra): the same distances, 8 neighbours, a
+// diagonal 1.414, never cutting a corner past a blocked cell.
+let _kidHeapI = new Int32Array(4096), _kidHeapD = new Float64Array(4096);
+function kidFieldFill(nx, nz, free, dist, start) {
+  let HI = _kidHeapI, HD = _kidHeapD, n = 0;
+  const done = new Uint8Array(nx * nz);
+  const push = (cell, d) => {
+    if (n === HI.length) {
+      const I2 = new Int32Array(n * 2), D2 = new Float64Array(n * 2); I2.set(HI); D2.set(HD);
+      HI = _kidHeapI = I2; HD = _kidHeapD = D2;
+    }
+    let j = n++;
+    while (j > 0) { const p = (j - 1) >> 1; if (HD[p] <= d) break; HI[j] = HI[p]; HD[j] = HD[p]; j = p; }
+    HI[j] = cell; HD[j] = d;
+  };
+  dist[start] = 0; push(start, 0);
+  while (n > 0) {
+    const cur = HI[0];
+    const li = HI[--n], ld = HD[n];
+    let j = 0;
+    while (true) {
+      let c = 2 * j + 1; if (c >= n) break;
+      if (c + 1 < n && HD[c + 1] < HD[c]) c++;
+      if (HD[c] >= ld) break;
+      HI[j] = HI[c]; HD[j] = HD[c]; j = c;
+    }
+    if (n > 0) { HI[j] = li; HD[j] = ld; }
+    if (done[cur]) continue;   // a stale entry: the cell was settled nearer
+    done[cur] = 1;
+    const i = (cur / nz) | 0, k = cur % nz;
     for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) {
       if (!di && !dk) continue;
       const ii = i + di, kk = k + dk;
       if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
-      const n = ii * nz + kk;
-      if (!free[n] || (di && dk && (!free[ii * nz + k] || !free[i * nz + kk]))) continue;   // no cutting a corner
+      const nb = ii * nz + kk;
+      if (done[nb] || !free[nb] || (di && dk && (!free[ii * nz + k] || !free[i * nz + kk]))) continue;   // no cutting a corner
       const nd = dist[cur] + (di && dk ? 1.414 : 1);
-      if (nd < dist[n]) { dist[n] = nd; q.push(n); }
+      if (nd < dist[nb]) { dist[nb] = nd; push(nb, nd); }
     }
   }
-  return (L._field = { b, nx, nz, dist });
+  return dist;
 }
 // the point to walk toward from (x, z): the centre of the nearest-to-the-foot cell around his own
 function ladderFieldNext(L, x, z) {
@@ -902,19 +936,7 @@ function kidFieldTo(gx, gz) {
   const { b, nx, nz, free } = kidFreeCells(), c = LADDER_CELL;
   const dist = new Float32Array(nx * nz).fill(Infinity);
   const fi = Math.max(0, Math.min(nx - 1, Math.round((gx - b.minX) / c))), fk = Math.max(0, Math.min(nz - 1, Math.round((gz - b.minZ) / c)));
-  const q = [fi * nz + fk]; dist[q[0]] = 0;
-  for (let h = 0; h < q.length; h++) {
-    const cur = q[h], i = (cur / nz) | 0, k = cur % nz;
-    for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) {
-      if (!di && !dk) continue;
-      const ii = i + di, kk = k + dk;
-      if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
-      const n = ii * nz + kk;
-      if (!free[n] || (di && dk && (!free[ii * nz + k] || !free[i * nz + kk]))) continue;
-      const nd = dist[cur] + (di && dk ? 1.414 : 1);
-      if (nd < dist[n]) { dist[n] = nd; q.push(n); }
-    }
-  }
+  kidFieldFill(nx, nz, free, dist, fi * nz + fk);
   return { b, nx, nz, dist };
 }
 // An advancing kid's pocket rule (v1.121) fired: the second time within 10 s and 3 m, the back-out has not got him
