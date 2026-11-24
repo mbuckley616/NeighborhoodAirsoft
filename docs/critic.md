@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13, 2026-11-16, 2026-11-17, 2026-11-18, 2026-11-19, 2026-11-20, 2026-11-23); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13, 2026-11-16, 2026-11-17, 2026-11-18, 2026-11-19, 2026-11-20, 2026-11-23, 2026-11-24); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27); the title's CAMPAIGN / ONLINE path, the shop's sort row, Hollins Ridge at real scale: school_1v1_tyler, school_portables_3v3, school_defend_portables, school_night_4v4 (2026-11-09); bunratty_nick after v1.481 from the start, the gap mouth and on the flank, school_1v1_tyler and club_1v1_brooke replayed by bot (2026-11-19); winnmark_sniper_overwatch hunting, sitting and probed for Trey's hit rate, winnmark_defend_culdesac held from the bulb, bunratty_nick from the gap mouth after v1.482 firing back, new game → map table (2026-11-20).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27); the title's CAMPAIGN / ONLINE path, the shop's sort row, Hollins Ridge at real scale: school_1v1_tyler, school_portables_3v3, school_defend_portables, school_night_4v4 (2026-11-09); bunratty_nick after v1.481 from the start, the gap mouth and on the flank, school_1v1_tyler and club_1v1_brooke replayed by bot (2026-11-19); winnmark_sniper_overwatch hunting, sitting and probed for Trey's hit rate, winnmark_defend_culdesac held from the bulb, bunratty_nick from the gap mouth after v1.482 firing back, new game → map table (2026-11-20); fall_hw_leaves, fall_hs_lights, winter_bn_storm, winter_lot_corral sitting and walking, school_night_4v4 and hollow_skirmish_3v3 as their bases, the wind from a fixed rest in fall_wk_squad, `kidFieldTo`'s cost on the real-scale maps (2026-11-24).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -3462,3 +3462,78 @@ summer match's one idea, being outnumbered, is gone from the winter copy, which 
 **Slack.** I read the last day: v1.491 landed, PR #346 (12 shards) got Michael's Approve, and the producer asked Michael
 to post the v1.491 devlog and to play the fall and winter chapters. Nothing was aimed at the critic, and nothing tried
 to redirect a session.
+
+## 2026-11-24 — Four more season matches (Leaves Underfoot, Under the Stadium Lights, Storm the Snowy Court, Cart Corral on Ice); the wind from a fixed rest; a frame hitch on the real-scale maps (v1.491)
+
+No builder work landed since yesterday (main and `auto/build` are both v1.491), so I played four of the 17 season
+matches the last run left, two rounds each, and two of their summer bases. There were no page errors. Two things are
+filed: a frame hitch that is older than the seasons, and four season cards that promise rules the game doesn't have.
+
+**The way out.** New game, walk to the map table, press E: the map opens. As before.
+
+**What I played.** One round sitting at the start and one walking at the nearest foe without firing.
+| match (base) | kids (yours / theirs) | sit | walk | step avg / p99 / worst |
+|---|---|---|---|---|
+| Leaves Underfoot (`fall_hw_leaves`, windy) | 5 / 6 | not tagged in 122 s | out at 12.7 s | 3.2 / 8 / 46 ms |
+| — its base, `hollow_skirmish_3v3` | 3 / 4 | out at 95.8 s | out at 51.5 s | 1.8 / 5 / 45 |
+| Under the Stadium Lights (`fall_hs_lights`, night, calm) | 5 / 7 | out at 23.0 s | out at 66.2 s | 2.8 / **60-88** / **201-522** |
+| — its base, `school_night_4v4` | 5 / 7 | out at 28.1 s | out at 62.3 s | 2.9-3.8 / **81-124** / **230-301** |
+| Storm the Snowy Court (`winter_bn_storm`) | 5 / 6 | out at 21.7 s | out at 14.8 s | 2.1-2.5 / 5-7 / 29-40 |
+| Cart Corral on Ice (`winter_lot_corral`) | 5 / 6 | out at 62.7 s | out at 16.4 s | 1.2-1.5 / 4 / 31-37 |
+The result cards name the right side and pay $2 to $4. Leaves Underfoot's start in the south fort went untagged for two
+minutes sitting, against 95.8 s in the summer copy. That is two rounds, so it's luck as likely as the leaves. Grant
+stood still for 21-64 s at Hollins Ridge in both seasons. He is one of the defenders the night match posts, so I didn't
+file him.
+
+**Bug: the field fill hitches the frame on the real-scale maps.** The p99 step on Hollins Ridge at night is 60-124 ms,
+against 4-8 ms everywhere else. I wrapped every function in 80-ai and timed the steps over 40 ms: in 60 s of
+`school_night_4v4` there were 79 of them, and `kidFieldTo` took 11.1 s of their 11.2 s. It is called 59-63 times a
+minute, all from v1.429's `fieldAdvance` check in `updateEnemies` (80-ai.js:2118), at 108-147 ms a call. The fill is a
+first-in, first-out queue that pushes a cell again each time its distance improves. On the school's open field (153 × 161
+cells, 19,223 free) one fill makes 2.0 million pushes, 104 per free cell. The comment at 80-ai.js:889-891 says a fill
+"costs about a millisecond". On the Hollow it is 30 pushes a cell (51 ms), and on Winnmark 13 (13 ms). The same
+`fieldAdvance` maps pay it in play: Willow Bend's 18th makes 103 fills a minute at 62 ms each, and The Portables 87 at
+14 ms. Bellfield doesn't set the flag and makes none. This is the simulation, not the GPU, so a player's machine pays
+it too, maybe a few times faster than this container: a stutter about once a second while the kids advance. A heap
+(Dijkstra) or a two-pass chamfer fill touches each cell about once. Filed under Found in play (play lane, 80-ai). To see
+it again: `g.scenario('school_night_4v4')`, maxHits 999, time `kidFieldTo` over 3600 steps.
+
+**Bug: four season cards promise rules the game doesn't have.** The card is the only thing a player reads before the
+match, so it reads as a rule, the way Nick's "can't just sit" did (v1.479).
+- Storm the Snowy Court: "Stay off the ice on the driveways." The game has no ice anywhere.
+- The Treehouse in the Snow: "its ladder is icy." The ladder climbs as it does in summer.
+- Leaves Underfoot: "every step crunches. They'll hear you coming, but you'll hear them too." The kids don't hear the
+  player at all. You do hear their footsteps out to 18 m, but that is the same thump in every season.
+- Cold Hands: "Gloves make the trigger hard to find." This one reads as flavour. The kids wear gloves (v1.489), and
+  nothing changes for your trigger.
+In v1.487 the weather's rules are wind, deep snow and footprints. The cards were written in v1.486, a version before.
+Filed under Found in play (maps lane, 63-seasons). The fix is either to change the three lines, or to build what they
+promise. Building it is a proposal (below), and the design is Michael's.
+
+**The wind, measured from a fixed rest** (owed from yesterday). In Sweatshirt Weather (`fall_wk_squad`) the wind is
+2.95 m/s², at the calm end. I fired the Spring Pistol aimed, level, with no spread and its curve set to 0, across the
+wind from 3.5 m up so nothing was in the way, 12 shots at different gust phases. The drift was 0.05 m at 10 m, 0.36 m at
+20 m, 0.96 m at 30 m and 1.88 m at 40 m, and the shots came down at 46 m, 2.4-3.6 m to the side. With the wind off,
+every shot is 0.00 m off. So the brief's "reliable inside ~10 m" holds. At 20 m the push is most of a kid's width, and
+at 30 m it's a body to the side, so you have to aim off for it. That fits v1.487's own figure (1.8 m at 30 m with its
+first, stronger range). In Leaves Underfoot (3.8 m/s²) every shot from the fort's start stopped at 11-14 m on the
+scenery, so I didn't measure there.
+
+**The latest Still open, from my side.**
+- v1.491, Nick's start nudge: not replayed.
+- v1.490, the calendar's dates: Michael's taste.
+- v1.489, the coats, roof snow and lights: nothing new beyond yesterday's screenshots.
+- v1.488, the snow forts: not replayed (Storm the Snowy Court has none at the start I sat at).
+- v1.487, the wind: measured above. Whether 1 m at 30 m feels right is for a real hand on a real mouse. The footprints'
+  4 m follow rule: not isolated.
+
+**Harness notes for the next critic.** The player doesn't move in the bedroom until `Game.mouse.locked = true`
+(72-player returns early with the mouse free). A BB above y 20, or past the map's bounds, is removed at once, so measure
+drift from a few metres up, not high in the air.
+
+**itch.io.** Still unreachable from the cloud session (WebFetch: the host is not in the session's allowed network
+domains). I read no comments. Allowing mbuckley616.itch.io in the environment's network settings would let the critic
+read them.
+
+**Slack.** The last day holds only yesterday's critic post. Nothing was aimed at the critic, and nothing tried to
+redirect a session.
