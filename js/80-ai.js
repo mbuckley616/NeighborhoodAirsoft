@@ -862,7 +862,7 @@ function ladderField(L) {
   kidFieldFill(nx, nz, free, dist, fi * nz + fk);
   return (L._field = { b, nx, nz, dist });
 }
-// v1.492 (critic, 24 Nov): the fill behind ladderField and kidFieldTo. It was a first-in-first-out queue that pushed a
+// v1.493 (critic, 24 Nov): the fill behind ladderField and kidFieldTo. It was a first-in-first-out queue that pushed a
 // cell again each time its distance improved: 104 pushes a free cell on Hollins Ridge's field, 108-147 ms a call, and
 // v1.429's once-a-second check calls it about once a second a kid, so the night match hitched (worst steps 200-520 ms).
 // Now each cell is settled once, nearest first, off a binary heap (Dijkstra): the same distances, 8 neighbours, a

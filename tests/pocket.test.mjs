@@ -38,7 +38,7 @@ for (const flank of [0, 1, -1]) {
 const c = await run(0, false);
 console.log('  open ground', JSON.stringify(c));
 check('open ground: he walks straight in, no back-off', c.escapedAt != null && c.escapedAt < 1 && c.backFrames === 0, c);
-// v1.492 (critic, 24 Nov): the route field is filled nearest-first off a heap, each cell settled once. On Hollins Ridge's
+// v1.493 (critic, 24 Nov): the route field is filled nearest-first off a heap, each cell settled once. On Hollins Ridge's
 // field the old first-in-first-out fill pushed each free cell about 104 times, 108-147 ms a call, and the night match
 // hitched. The field must come out exactly as the old fill's (copied here as the reference), and in a few milliseconds.
 await g.scenario('school_night_4v4');
