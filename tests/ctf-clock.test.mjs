@@ -23,15 +23,21 @@ check('the briefing names the five minutes and the tie', /five minutes/.test(bri
 await g.scenario(ID);
 const hud = await page.evaluate(() => {
   const C = Game.scenario.ctf, val = () => document.getElementById('timerValue').textContent, hud = document.getElementById('timerHud');
-  updateTimerHud();
+  // 24 Nov (play builder): g.scenario() waits for the pointer lock to settle while the page's own tick() runs, so the
+  // flag clock has already run 1-3 s here (the HUD read 4:58 on main). Read what it shows now against C.t, then the
+  // start itself with the clock put back to BEGIN.
+  const ran = C.t; updateTimerHud();
+  const now = val(), nowWant = Math.ceil(300 - ran);
+  C.t = 0; updateTimerHud();
   const start = val();
   C.t = 280.2; updateTimerHud();
   const late = { v: val(), urgent: hud.classList.contains('urgent') };
   C.t = 200; updateTimerHud();
   const mid = { v: val(), urgent: hud.classList.contains('urgent') };
-  return { clock: C.clock, start, late, mid, push: C.push };
+  return { clock: C.clock, ran, now, nowWant: `${Math.floor(nowWant / 60)}:${String(nowWant % 60).padStart(2, '0')}`, start, late, mid, push: C.push };
 });
 console.log('   hud:', JSON.stringify(hud));
+check('the clock starts at BEGIN: run under 15 s when the match is handed over, and the HUD shows what is left', hud.ran >= 0 && hud.ran < 15 && hud.now.includes(hud.nowWant), hud);
 check('the clock is 300 s and the HUD starts at 0 – 0 5:00', hud.clock === 300 && /0 – 0 5:00/.test(hud.start), hud.start);
 check('it counts down, red under 30 s and not before', /1:40/.test(hud.mid.v) && !hud.mid.urgent && /0:20/.test(hud.late.v) && hud.late.urgent, hud);
 check('their push point is mid-street, 24 m up from their flag, on clear ground', hud.push && Math.abs(hud.push.theirs.x - 0.9) < 2 && Math.abs(hud.push.theirs.z) < 4, hud.push);
@@ -64,13 +70,14 @@ check('level at 5:00 is a draw: DRAW 1–1, paid as a loss and not counted', lev
 // --- played rounds, kids only (the player tagged out and parked behind the south-east fence), 120 s each, three with
 // Christian pushing and three with the push off (v1.190's game): each second, how many of Mason's side other than
 // Mason stand within 15 m of their flag, not walking back from a tag
-const play = async (pushOn, secs) => {
+const play = async (pushOn, secs, clockAt = 0) => {
   await g.scenario(ID);
-  await page.evaluate((pushOn) => {
+  await page.evaluate(([pushOn, clockAt]) => {
+    if (clockAt) Game.scenario.ctf.t = clockAt;
     Game.player.pos.set(36, 0, 25); Game.player.hitsTaken = Game.player.maxHits;
     if (!pushOn) for (const k of Game.scenario.enemies) if (k.ctfRole === 'push') k.ctfRole = null;
-    window._cw = { n: 0, two: 0, near: {}, still: {}, wedge: 0, pushes: 0 };
-  }, pushOn);
+    window._cw = { n: 0, two: 0, near: {}, still: {}, wedge: 0, pushes: 0, rt0: Game.scenario.roundTime || 0, clockAt };
+  }, [pushOn, clockAt]);
   for (let s = 0; s < secs; s++) {
     const mode = await page.evaluate(() => {
       const W = window._cw, C = Game.scenario.ctf, f = C.flags.theirs.base;
@@ -98,7 +105,8 @@ const play = async (pushOn, secs) => {
   return page.evaluate(() => {
     const W = window._cw, C = Game.scenario.ctf, chr = Game.scenario.enemies.find(e => e.name === 'Christian');
     const end = C.log.find(x => x.ev === 'time') || C.caps[C.caps.length - 1];
-    return { mode: Game.mode, t: +(C.t).toFixed(1), endT: end ? end.t : null, n: W.n, two: W.two, twoAny: W.twoAny || 0, near: W.near, wedge: +W.wedge.toFixed(1), pushes: chr._pushes || 0,
+    // endT is the clock when it ended: the round's time since the clock was set, plus where it was set
+    return { mode: Game.mode, t: +(C.t).toFixed(1), endT: end ? +(end.t - (W.clockAt ? W.rt0 - W.clockAt : 0)).toFixed(1) : null, n: W.n, two: W.two, twoAny: W.twoAny || 0, near: W.near, wedge: +W.wedge.toFixed(1), pushes: chr._pushes || 0,
       score: C.score, timeUp: C.timeUp, takes: C.log.filter(x => x.ev === 'take').map(x => x.by + '@' + x.t).join(' '),
       outcome: document.getElementById('outcomeText').textContent };
   });
@@ -113,9 +121,11 @@ check('with the push, two of theirs keep their flag under a tenth of the time, a
   share(on) < 0.1 && share(on) < share(off) / 2, [share(on), share(off)]);
 check('Christian pushes out every round, and is never wedged on the way', on.every(r => r.pushes >= 1 && r.wedge <= 4.1), on.map(r => [r.pushes, r.wedge]));
 
-// --- one round run out to the clock (kids only): it ends at 5:00 at the latest, with a result
-const full = await play(true, 330);
-console.log('   to the clock:', JSON.stringify({ endT: full.endT, mode: full.mode, score: full.score, timeUp: full.timeUp, outcome: full.outcome, takes: full.takes }));
+// --- one round run out to the clock (kids only): it ends at 5:00 at the latest, with a result. 24 Nov (play builder):
+// the round starts at 3:00 on the clock (its last two minutes played, 150 s at most), not 0:00: the whole 330 s round
+// took the suite past run.mjs's 10 minutes in a cloud container.
+const full = await play(true, 150, 180);
+console.log('   to the clock:', JSON.stringify({ t: full.t, endT: full.endT, mode: full.mode, score: full.score, timeUp: full.timeUp, outcome: full.outcome, takes: full.takes }));
 check('a round played out ends by 5:00 with a result', full.mode === 'result' && full.endT != null && full.endT <= 301 && (full.timeUp || Math.max(full.score.ours, full.score.theirs) >= 2) && /FLAGS|THEY|DRAW/.test(full.outcome), full);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
