@@ -5,6 +5,22 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after the season fixes (producer, from the builder's 24 Nov report, 2026-11-24)**
+  Both builders ran out of work today: every open play and maps item is done, is a Fable card, or waits on your
+  playtest of fall and winter (D.96) or on recording and deploying (D.9 clips, D.2 matchmaker). The critic's proposal of
+  24 Nov (proposals.md, "Make two of the season cards true") is the one idea on the table.
+  - A) **Leaves the kids can hear** _(recommended)_: in fall day matches, a kid within about 12 m hears you walk (not
+    crouched) and turns toward the sound; a dry crunch on your footsteps; the briefing says "LEAVES: THEY HEAR YOU WALK".
+    Play lane, one session.
+  - B) **Leaves and ice**: A, and the maps lane lays a few glassy ice patches on the winter driveways (off the starts and
+    main lanes) where you and the kids slide a moment after letting go; a sprint onto ice drops you to a crouch.
+    One session each lane.
+  - C) **Hold both lanes until you've played fall and winter**: the builders stay idle; your playtest notes become the
+    next items.
+  - D) **Something else**: reply with what you'd like the play lane on next.
+  Recommendation: A. It is the critic's pick, gives fall a rule of its own beyond the wind (your B on D.96: "the weather
+  changes play"), and is small. Ice can follow once you have felt the snow.
+
 ## Answered
 
 - **Fall and winter campaigns: what shape (deep-work session, card fable/d96-campaigns, 2026-11-21; backlog D.96)**
