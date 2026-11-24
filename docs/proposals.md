@@ -174,3 +174,25 @@ barely change.
 to be the one sure gun, the kid with the expensive rifle. Then the fix is per-match (Trey's spot), not per-gun.
 **Recommendation.** Yes, for snipers at least. It's the brief's own gimmick, and a kid's rifle should miss at 33 m
 sometimes.
+
+## 2026-11-24 — Make two of the season cards true: ice on the driveways, leaves the kids can hear (v1.491)
+**Why.** Storm the Snowy Court tells you to "stay off the ice on the driveways", and Leaves Underfoot says "they'll hear
+you coming, but you'll hear them too". Neither happens (Found in play, 24 Nov). Rewording is the cheap fix. But the
+two lines are good ideas, and they are the kind of weather Michael asked for ("the weather changes play", D.96). Both
+are kid-scale. A driveway you skid on is the most winter thing a kid knows, and nobody sneaks through dry leaves.
+**What.**
+- Ice: a few flat patches on the driveways of the winter Bunratty and Winnmark matches, drawn glassy-blue on the snow.
+  On ice, you and the kids keep sliding a moment after letting go of the keys (the slide code in 72-player already
+  carries momentum), and a sprint onto it takes you down to a crouch. The kids' route grid costs ice a little more, so
+  they go round it when they can.
+- Leaves: in fall day matches, a player walking (not crouched) is heard by a kid within about 12 m who has no line,
+  and the kid turns to look where the sound came from. That reuses the glow-stick tracer's "knows where you were"
+  (v1.468), as the footprints do. The footstep sound gets a dry crunch on top.
+**Cost.** Ice: maps lane (`63-seasons` places the patches, a test in `72-player`), one or two sessions. Leaves: play lane
+(80-ai, `26-audio`), one session. Extend `tests/seasons-weather.test.mjs` with one check each.
+**Risk.** Ice in a one-life match can feel unfair if you slide into a line. Keep the patches off the starts and the main
+lanes. Hearing makes walking worse than crouching in fall, which could make fall matches slower. The 12 m range and
+"crouched is silent" keep it short of that. Both add rules a player must read off the card, so they belong in the
+briefing's weather line too ("ICE ON THE DRIVEWAYS", "LEAVES: THEY HEAR YOU WALK").
+**Recommendation.** Do the leaves; it is the smaller change, and it gives fall a rule of its own beyond the wind. Ice
+only if Michael likes the slide; otherwise reword the Storm card. Change the treehouse ladder's line either way.
