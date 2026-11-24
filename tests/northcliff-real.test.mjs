@@ -52,13 +52,6 @@ for (const id of ['northcliff_1v1_evan', 'northcliff_twins_3v3', 'northcliff_def
     const seen = theirs.flatMap(e => ours.filter(o => sees(e._spawnPos || e.pos, o)).map(o => e.character.name + '→' + o.x.toFixed(1) + ',' + o.z.toFixed(1)));
     // v1.421: every kid stands on the ground under him from the first step (a kid left at y 0 saw under a house up the hill)
     const floating = Game.scenario.enemies.filter(e => !e.perch && Math.abs(e.pos.y - G(e.pos.x, e.pos.z)) > 0.05).map(e => e.character.name);
-    // draw calls from six views: the east end, mid-street, the bend, the high yard, the creek fort, their base
-    const P = Game.player, save = [P.pos.clone(), P.yaw];
-    let worst = 0;
-    for (const [x, z, yaw] of [[39, -3, Math.PI / 2], [4, -1, Math.PI / 2], [-30, -10, Math.PI * 0.75], [10, -33, Math.PI * 0.9], [-6, 30, 0], [-38, -34, Math.PI]]) {
-      P.pos.set(x, G(x, z) + 0.1, z); P.yaw = yaw; stepGame(1 / 60); Game.renderer.render(Game.scene, Game.camera); worst = Math.max(worst, Game.renderer.info.render.calls);
-    }
-    P.pos.copy(save[0]); P.yaw = save[1];
     const hit = applyBBHit; applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c);
     let d = null, t = 0; const o = spawnEnemyBB;
     // the range of the shot itself, shooter to the point he aims at (the nearest foe can stand 1 m away behind a corner
@@ -66,6 +59,15 @@ for (const id of ['northcliff_1v1_evan', 'northcliff_twins_3v3', 'northcliff_def
     spawnEnemyBB = (e, tg) => { if (d == null && !inOpeningHold() && tg) d = Math.hypot(e.pos.x - tg.x, e.pos.z - tg.z); return o(e, tg); };
     for (let f = 0; f < 60 * 60 && d == null && Game.mode === 'scenario'; f++) { stepGame(1 / 60); t = f / 60; }
     spawnEnemyBB = o; applyBBHit = hit;
+    // draw calls from six views: the east end, mid-street, the bend, the high yard, the creek fort, their base.
+    // Taken after the first shot (tests only, 24 Nov): stood in their base, you were within the twins' holdNear 40 m, which
+    // freed them at once, and the first shot came down the open street at 56-60 m in 2.4 s (red on main since about v1.480).
+    const P = Game.player, save = [P.pos.clone(), P.yaw];
+    let worst = 0;
+    for (const [x, z, yaw] of [[39, -3, Math.PI / 2], [4, -1, Math.PI / 2], [-30, -10, Math.PI * 0.75], [10, -33, Math.PI * 0.9], [-6, 30, 0], [-38, -34, Math.PI]]) {
+      P.pos.set(x, G(x, z) + 0.1, z); P.yaw = yaw; stepGame(1 / 60); Game.renderer.render(Game.scene, Game.camera); worst = Math.max(worst, Game.renderer.info.render.calls);
+    }
+    P.pos.copy(save[0]); P.yaw = save[1];
     return { seen, floating, worst, d: d && +d.toFixed(1), t: +t.toFixed(1) };
   });
   console.log(`   ${id}:`, JSON.stringify(r));
