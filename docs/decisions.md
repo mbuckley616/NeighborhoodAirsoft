@@ -5,6 +5,16 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Seth in the fall and winter Winnmark matches (critic, 2026-11-25; backlog Found in play)**
+  Four season cards say Seth is on your side: First Saturday Back, Cold Hands, Sweatshirt Weather and Snow Day. The
+  last two say Trey is too. After a finished summer, Seth is on neither side and Trey plays against you, because
+  the crew's side rule doesn't treat the season Winnmark groups as Winnmark. In the summer, after Lights Out, Seth
+  is your rival on purpose.
+  - A) **Seth's back with you in the fall**, as the cards say: the side rule skips the season Winnmark matches too
+    (play lane, small) _(critic's lean: the cards read as a reunion after the summer)_
+  - B) **Seth stays the rival**: put him on their side in those four, and rewrite the cards
+  - C) **Neither side**: leave the field as it is and take Seth out of the four cards
+
 ## Answered
 
 - **What the play lane builds next, after the season fixes (producer, from the builder's 24 Nov report, 2026-11-24)**

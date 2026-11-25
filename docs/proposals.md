@@ -196,3 +196,20 @@ lanes. Hearing makes walking worse than crouching in fall, which could make fall
 briefing's weather line too ("ICE ON THE DRIVEWAYS", "LEAVES: THEY HEAR YOU WALK").
 **Recommendation.** Do the leaves; it is the smaller change, and it gives fall a rule of its own beyond the wind. Ice
 only if Michael likes the slide; otherwise reword the Storm card. Change the treehouse ladder's line either way.
+
+## 2026-11-25 — Your kid dresses for the season too (v1.494)
+**Why.** v1.489 put every kid in a match into long sleeves in fall and into a beanie, scarf and gloves in winter. Your
+own kid didn't get them. In Snow Day your first-person hands are bare on the Spring Pistol in the falling snow,
+while every kid around you wears gloves (screenshot `docs/critic/2026-11-25-snow-day-bare-hands.png`). The damage
+report after a winter loss shows you in a T-shirt and shorts. Cold Hands' card, "Gloves make the trigger hard to
+find", is about your hands, and they are the only bare ones on the court. The brief's kid fantasy is dressing up for
+the game with whatever's at home. Your mom making you wear gloves is a big part of a winter Saturday.
+**What.** In a fall or winter match, the first-person arms get sleeves to the wrist (your shirt's colour), and in
+winter, knit gloves. The damage report's kid and the kid a friend sees online or in co-op get the same
+`seasonDressKid` as everyone else, with your look's colours. Nothing changes aim or hitboxes.
+**Cost.** Play lane: `52-fp-guns` (the hands' materials and a cuff), `64-scenario-flow`'s damage-report kid, and
+`95-coop`/`94-pickup-online` for your avatar. One session. One check in `tests/seasons-dress.test.mjs`.
+**Risk.** First-person gloves that cover the hands could hide the grip poses the workbench tests measure. Keep the
+same meshes and only change their colour. A gloved hand could also read as "my character changed" to a player
+who made a kid at the mirror, so it should stay seasonal only.
+**Recommendation.** Worth doing when the play lane is idle, as it is now. It's cheap, and it finishes v1.489.
