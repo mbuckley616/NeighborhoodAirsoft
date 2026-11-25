@@ -15,7 +15,7 @@ const rows = await page.evaluate(() => {
     Game.persist.crew = crew;
     const ctx = findScenarioListContext(id), type = matchType(id), zoneCap = ZONE_CAPTAINS[ctx.group];
     const raw = crewSetupSides(id) || [], s = crewSetup(id) || [];
-    const exempt = type === 'ffa' || type === 'callout' || ctx.group === 'winnmark_court';
+    const exempt = type === 'ffa' || type === 'callout' || WINNMARK_SIDE_GROUPS.includes(ctx.group);   // v1.495: and the season Winnmarks
     const wrong = exempt ? [] : s.filter(es => !es.vip && (es.team === 'player' ? !sideAllyOk(es.charId, zoneCap) : !sideFoeOk(es.charId, zoneCap, crew)))
       .map(es => `${es.charId}${es.team === 'player' ? ' with you' : ' against'}`);
     const theirs = a => a.filter(es => es.team !== 'player').length;
@@ -46,6 +46,34 @@ check("the plan's cases: the Hollow's Mitchell and Mason, Owen at the lot, Ryan 
 const CAPTAIN_FINALE_IDS = await page.evaluate(() => Object.values(CAPTAIN_FINALES).flat());
 const kept = rows.filter(r => /^bunratty_|^northcliff_|^bellfield_|^school_/.test(r.id) && r.crew === 3 && r.swaps.length && !CAPTAIN_FINALE_IDS.includes(r.id));
 check("Bunratty, Northcliff and Hollins Ridge keep their sides (their crews at home, Seth's with Seth)", kept.length === 0, kept);
+
+// v1.495 (Michael: A, 25 Nov): after a finished summer, the fall's and the winter's Winnmark cards that put Seth (and
+// Trey) on your side do: First Saturday Back, Cold Hands, Sweatshirt Weather and Snow Day, with all five, three or one
+const season = await page.evaluate(() => {
+  const keep = Object.assign({}, Game.persist.completed), out = [];
+  for (const z of ZONE_LADDER) for (const id of PIN_SCENARIO_GROUPS[z.key] || []) Game.persist.completed[id] = true;
+  const want = { fall_wk_wingman: ['seth'], winter_wk_short: ['seth'], fall_wk_squad: ['seth', 'trey'], winter_wk_snow_day: ['seth', 'trey'] };
+  for (const n of [5, 3, 1]) {
+    Game.persist.crew = CREW_ROSTER.slice(0, n);
+    for (const id in want) {
+      const s = crewSetup(id) || [], ours = s.filter(es => es.team === 'player').map(es => es.charId), theirs = s.filter(es => es.team !== 'player').map(es => es.charId);
+      out.push({ id, n, ok: want[id].every(k => ours.includes(k) && !theirs.includes(k)), ours: ours.join(' '), theirs: theirs.join(' ') });
+    }
+  }
+  Game.persist.completed = keep; Game.persist.crew = [];
+  return out;
+});
+check('after the summer, Seth is with you in the four season Winnmark matches whose cards say so, and Trey in the two that name him',
+  season.every(r => r.ok), season.filter(r => !r.ok));
+
+// In play: First Saturday Back after the summer puts Seth on the field on your side
+await page.evaluate(() => { for (const z of ZONE_LADDER) for (const id of PIN_SCENARIO_GROUPS[z.key] || []) Game.persist.completed[id] = true; Game.persist.crew = CREW_ROSTER.slice(); });
+await g.scenario('fall_wk_wingman');
+await g.spin(240);
+const fsb = await page.evaluate(() => ({ mode: Game.mode, seth: Game.scenario.enemies.filter(e => e.charId === 'seth').map(e => e.team) }));
+check('First Saturday Back after the summer plays with Seth on your side', fsb.mode === 'scenario' && fsb.seth.length === 1 && fsb.seth[0] === 'player', fsb);
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); Game.persist.completed = {}; Game.persist.crew = []; });
+await g.spin(60);
 
 // In play: a swapped match builds and runs with the swapped kids on the field
 for (const id of ['hollow_attack_north_fort', 'store_price_check_3v3']) {
