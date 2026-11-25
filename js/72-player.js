@@ -667,6 +667,7 @@ function updatePlayer(dt) {
       p._stepPhase += dt * stepCadence;
       if (Math.floor(p._stepPhase / Math.PI) > Math.floor(prevStep / Math.PI)) {
         playPlayerFootstep(sprintActive);
+        seasonFootstep(p, sprintActive);   // v1.494 (D.97): in a fall day's leaves a step crunches and a kid near can hear it
       }
     } else {
       p._stepPhase = 0;   // reset between movements so the next step lands promptly

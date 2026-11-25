@@ -651,6 +651,33 @@ function playPlayerFootstep(heavy) {
   osc.start(t); osc.stop(t + 0.12);
 }
 
+// v1.494 (D.97): dry leaves under a fall day's step, on top of the scuff: a few short bright crackles (high-passed
+// noise) spread over ~90 ms, so you hear what the kids near you hear. Crouched steps make none (seasonFootstep).
+function playLeafCrunch(heavy) {
+  playLeafCrunch.count = (playLeafCrunch.count || 0) + 1;   // (the tests count them; no audio context headless)
+  if (!Game.audio?.ctx) return;
+  const ctx = Game.audio.ctx;
+  const t = ctx.currentTime;
+  const dur = heavy ? 0.11 : 0.09;
+  const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  const n = 4 + Math.floor(gameRandom() * 3), len = d.length;
+  for (let c = 0; c < n; c++) {   // each crackle a 4-9 ms burst at its own moment
+    const at = Math.floor(gameRandom() * len * 0.8), w = Math.floor(ctx.sampleRate * (0.004 + gameRandom() * 0.005));
+    const amp = 0.5 + gameRandom() * 0.5;
+    for (let i = 0; i < w && at + i < len; i++) d[at + i] += (gameRandom() * 2 - 1) * amp * Math.pow(1 - i / w, 1.5);
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'highpass';
+  filt.frequency.value = 1800 + gameRandom() * 900;
+  const g = ctx.createGain();
+  g.gain.value = (heavy ? 0.07 : 0.05) * (0.85 + gameRandom() * 0.3);
+  src.connect(filt).connect(g).connect(sfxOut());
+  src.start(t);
+}
+
 function playShot(srcX, srcZ) {
   // v1.420 (D.83): your own shot through a soda-bottle silencer is quieter (kids' shots are positional, as before)
   const own = (srcX === undefined || srcZ === undefined);
