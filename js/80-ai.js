@@ -1616,6 +1616,12 @@ function updateEnemies(dt) {
         e._lastSawPlayer = e._tracerSawAt;
         e._lastSeenPos = { x: e._tracerFrom.x, y: e._tracerFrom.y, z: e._tracerFrom.z };
         e._lastSeenHeadUp = null;
+      } else if (Season.leaves && (e._heard = seasonHeardBy(e, tgt.ref)) && (!e._lastSawPlayer || e._heard.t > e._lastSawPlayer)) {
+        // v1.494 (D.97): in a fall day's leaves he heard your step within 12 m: he knows where it was, as if he'd seen you
+        e._lastSawPlayer = e._heard.t;
+        e._lastSeenPos = { x: e._heard.x, y: e._heard.y, z: e._heard.z };
+        e._lastSeenHeadUp = null;
+        e._heardAt = e._heard.t;
       } else if (Season.prints && (e._trailT = (e._trailT || 0) + dt) > 0.5) {
         // v1.487 (D.96): on his target's trail in the snow he knows where its newest print is, as if he'd seen him there
         e._trailT = 0;

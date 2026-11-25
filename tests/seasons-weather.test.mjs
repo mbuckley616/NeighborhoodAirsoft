@@ -63,6 +63,7 @@ const fortsSummer = await page.evaluate(() => Game.player.obstacles.filter(o => 
 const boxSummer = await shootBlock(20);
 await g.scenario('fall_wk_wingman');
 const wFall = await drift();
+const leavesFall = await page.evaluate(() => Season.leaves);   // v1.494: as the match set it
 // the same match's wind every time, and a fall night calm (the weather as enterScenario sets it, without a map)
 const wRule = await page.evaluate(() => {
   const k = w => w && (w.accel.toFixed(3) + '@' + w.x.toFixed(3));
@@ -74,6 +75,50 @@ const wRule = await page.evaluate(() => {
   seasonWeather(null, 'winter', 'day', 'winter_wk_short'); const winter = Season.wind, wmult = Season.moveMult;
   return { same: a === b, differs: a !== other, night, summer, mult, winter, wmult };
 });
+// v1.494 (backlog D.97, Michael: A, 24 Nov): a fall day's leaves. A step you walk or sprint (not crouched) crunches, and a
+// kid within 12 m with no line on you hears it: he knows where you were, as if he'd seen you. Crouched, nothing.
+const hear = await page.evaluate((leavesFall) => {
+  const r = { leaves: leavesFall };
+  const k = (season, tod) => { seasonWeather(null, season, tod, 'x'); return Season.leaves; };
+  r.night = k('fall', 'night'); r.winter = k('winter', 'day'); r.summer = k(null, 'day');
+  seasonWeather(null, 'fall', 'day', 'fall_wk_wingman');   // (the match's own weather back)
+  const sight = aiSightY;
+  aiSightY = () => null;   // nobody has a line on anyone: what he knows, he heard
+  const foes = Game.scenario.enemies.filter(e => e.team !== 'player' && e.health > 0);   // (in a team match most are after your crew)
+  r.foes = foes.length;
+  const run = (crouch, dist) => {
+    const f = foes[0], P = Game.player;
+    for (const e of Game.scenario.enemies) { e._heardAt = null; e._lastSawPlayer = 0; e._lastSeenPos = null; e._graceT = 99; }
+    f._targetRef = Game.player; f._targetReeval = 99;   // he is after you
+    Season.heard = null;
+    P.pos.x = f.pos.x + dist; P.pos.z = f.pos.z; P.crouching = crouch; P.onGround = true;
+    const c0 = playLeafCrunch.count || 0, from = { x: P.pos.x, z: P.pos.z };
+    Game.keys.KeyD = true;
+    let first = null;
+    for (let i = 0; i < 120; i++) {   // 2 s: a walking step every 0.39 s
+      if (crouch) P.crouching = true;
+      f.pos.x = P.pos.x - dist; f.pos.z = P.pos.z; f._targetRef = Game.player; f._targetReeval = 99;   // he keeps his distance, after you
+      stepGame(1 / 60);
+      if (first == null && f._heardAt) first = i;
+    }
+    Game.keys.KeyD = false;
+    for (let i = 0; i < 20; i++) stepGame(1 / 60);
+    P.crouching = false;
+    const ls = f._lastSeenPos;
+    return { walked: +Math.hypot(P.pos.x - from.x, P.pos.z - from.z).toFixed(2), crunches: (playLeafCrunch.count || 0) - c0,
+      target: getTarget(f).ref === Game.player, heard: !!f._heardAt, firstStep: first, at: ls ? +Math.hypot(ls.x - P.pos.x, ls.z - P.pos.z).toFixed(2) : null };
+  };
+  r.walk8 = run(false, 8);
+  r.walk20 = run(false, 20);
+  r.crouch8 = run(true, 8);
+  aiSightY = sight;
+  return r;
+}, leavesFall);
+console.log('   ' + JSON.stringify({ hear }));
+check('leaves underfoot on a fall day only: not a fall night, the winter or the summer', hear.leaves === true && hear.night === false && hear.winter === false && hear.summer === false, hear);
+check('fall day: you walk 8 m from a kid with no line, your steps crunch and he hears where you are', hear.foes >= 1 && hear.walk8.walked > 1 && hear.walk8.crunches >= 3 && hear.walk8.heard && hear.walk8.at != null && hear.walk8.at < 2, hear.walk8);
+check('20 m off he hears nothing (the steps still crunch)', hear.walk20.walked > 1 && hear.walk20.crunches >= 3 && !hear.walk20.heard, hear.walk20);
+check('crouched at 8 m: no crunch, nothing heard', hear.crouch8.walked > 0.3 && hear.crouch8.crunches === 0 && !hear.crouch8.heard, hear.crouch8);
 console.log('   ' + JSON.stringify({ wSummer, wFall, wRule }));
 check('the summer has no wind: a BB at 30 m/s goes straight', wSummer.wind === null && wSummer.m30 < 0.01, wSummer);
 check('a fall day is windy: a shot drifts under 10 cm by 10 m and over 40 cm by 30 m', wFall.wind && wFall.m10 < 0.1 && wFall.m30 > 0.4, wFall);
@@ -116,6 +161,7 @@ const trail = await page.evaluate(() => {
   for (const e of foes) {
     const tgt = getTarget(e), who = tgt.ref, at = { x: tgt.pos.x, z: tgt.pos.z };
     want.set(e, { who, at });
+    e._targetRef = who; e._targetReeval = 99;   // v1.494: each keeps this target (Jamie re-picked one he could see, so his last sight moved)
     for (let k = 0; k <= 10; k++) { const t = k / 10; F.list.push({ x: e.pos.x + (at.x - e.pos.x) * t, z: e.pos.z + (at.z - e.pos.z) * t, y: 0, t: now - 1 + t, by: who }); }
   }
   const f0 = foes[0], w0 = want.get(f0), unit = seasonTrailFor(f0, w0.who), far = seasonTrailFor({ pos: { x: me.x + 400, z: me.z + 400 } }, w0.who);
@@ -136,12 +182,15 @@ const tags = await page.evaluate(() => {
   const card = id => [...new DOMParser().parseFromString(renderScenarioCard(id, 1, false), 'text/html').querySelectorAll('.sc-card-badge')].map(b => b.textContent).join('|');
   const r = { fall: card('fall_wk_wingman'), night: card('fall_bn_halloween'), winter: card('winter_bn_first_snow'), summer: card('bunratty_sean') };
   openScenarioBrief('winter_bn_first_snow'); r.brief = document.getElementById('briefLoc').textContent;
+  openScenarioBrief('fall_wk_wingman'); r.briefFall = document.getElementById('briefLoc').textContent;   // v1.494
+  openScenarioBrief('fall_bn_halloween'); r.briefNight = document.getElementById('briefLoc').textContent;
   document.getElementById('scenarioBriefModal').classList.remove('active');
   return r;
 });
 console.log('   ' + JSON.stringify(tags));
 check('the cards: WINDY on a fall day, HALLOWEEN on Halloween Night, DEEP SNOW in winter, nothing new in the summer', /WINDY/.test(tags.fall) && !/WINDY/.test(tags.night) && /HALLOWEEN/.test(tags.night) && /DEEP SNOW/.test(tags.winter) && !/WINDY|SNOW|HALLOWEEN/.test(tags.summer), tags);
 check('the briefing says it: winter, deep snow, slower, tracks', /WINTER · DEEP SNOW/.test(tags.brief), tags.brief);
+check('a fall day\'s briefing says the leaves; a fall night\'s does not', /LEAVES: THEY HEAR YOU WALK/.test(tags.briefFall) && !/LEAVES/.test(tags.briefNight), { fall: tags.briefFall, night: tags.briefNight });   // v1.494
 
 // v1.488 (D.96 step 4): snow forts. In winter every cardboard box is a snow block; BBs from either side knock it down:
 // slumped to 55% at 15 hits, gone from the obstacles and the cover at 30. In the summer the boxes are cardboard as before.

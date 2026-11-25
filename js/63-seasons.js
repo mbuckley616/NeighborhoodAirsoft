@@ -11,7 +11,8 @@
 // ----------------------------------------------------------------------
 const SEASONS = ['fall', 'winter'];
 const Season = { force: null, now: null, fx: null,   // force: tests ('summer' | 'fall' | 'winter'); now: the match's season
-  wind: null, moveMult: 1, prints: null };              // v1.487: the weather's rules (below)
+  wind: null, moveMult: 1, prints: null,                // v1.487: the weather's rules (below)
+  leaves: false, heard: null };                         // v1.494: dry leaves underfoot (fall by day), your last loud step
 // The season a scenario is played in: null for the summer
 function seasonOf(sc) {
   if (Season.force) return Season.force === 'summer' ? null : Season.force;
@@ -354,6 +355,7 @@ const SNOW_MOVE_MULT = 0.85;
 const PRINT_STEP = 0.8, PRINT_LIFE = 30, PRINT_FOLLOW_M = 4, PRINT_MAX = 600;
 function seasonWeather(built, season, timeOfDay, matchId) {
   Season.wind = null; Season.moveMult = 1;
+  Season.leaves = (season === 'fall' && timeOfDay !== 'night'); Season.heard = null;   // v1.494: the leaves (below)
   if (Season.prints && Season.prints.mesh && Season.prints.mesh.parent) Season.prints.mesh.parent.remove(Season.prints.mesh);
   Season.prints = null;
   if (season === 'fall' && timeOfDay !== 'night') {
@@ -451,6 +453,30 @@ function seasonTrailFor(e, ref) {
 }
 
 // ----------------------------------------------------------------------
+// v1.494 (backlog D.97, Michael: A, 24 Nov 2026, the critic's "leaves the kids can hear"): a fall day's dry leaves.
+// Every step you take walking or sprinting (not crouched) crunches, and a kid within LEAVES_HEAR_M of the step who has
+// no line on you hears it: he knows where you are, as if he'd seen you there then (the way he reads a glow-stick tracer,
+// v1.468, or your prints in the snow, v1.487), and answers as a kid who just lost sight of you (covering fire at that
+// spot, a peek). Crouched, you creep: no crunch and nothing to hear. Fall nights (no wind, the leaves damp) are as before.
+// ----------------------------------------------------------------------
+const LEAVES_HEAR_M = 12, LEAVES_HEARD_S = 0.4;
+// One of your footsteps (72-player, on each step's sound): a loud one in the leaves is heard
+function seasonFootstep(p, heavy) {
+  if (!Season.leaves || !p || p.crouching || Game.mode !== 'scenario') return false;
+  Season.heard = { x: p.pos.x, y: p.pos.y, z: p.pos.z, t: aiNow() };
+  if (typeof playLeafCrunch === 'function') playLeafCrunch(heavy);
+  return true;
+}
+// What a kid heard of his target just now: your newest loud step within LEAVES_HEAR_M of him, else null (80-ai, when
+// he has no line). Only you crunch: the kids and your friends online are not heard.
+function seasonHeardBy(e, ref) {
+  const H = Season.heard;
+  if (!Season.leaves || !H || ref !== Game.player || !e.pos) return null;
+  if (aiNow() - H.t > LEAVES_HEARD_S) return null;
+  return Math.hypot(H.x - e.pos.x, H.z - e.pos.z) <= LEAVES_HEAR_M ? H : null;
+}
+
+// ----------------------------------------------------------------------
 // v1.488 (D.96 step 4, Michael: B, "snow forts can be knocked down"): in winter every cardboard box on the map
 // (addHomeDepotBox, the cover the summer's matches are built round) is a block of packed snow instead, where it stood
 // and as big. A BB that hits one is swallowed with a puff, and every hit counts, from either side: at SNOW_SLUMP_HITS
@@ -503,7 +529,7 @@ function seasonSnowPuff(at) {   // (each fleck its own geometry: updateFragments
 }
 // The briefing's line for a season match: the season and what its weather does
 function seasonBriefTag(sc) {
-  if (sc.season === 'fall') return sc.timeOfDay === 'night' ? '🍂 FALL' : '🍂 FALL · WINDY: LONG SHOTS DRIFT';
+  if (sc.season === 'fall') return sc.timeOfDay === 'night' ? '🍂 FALL' : '🍂 FALL · WINDY: LONG SHOTS DRIFT · LEAVES: THEY HEAR YOU WALK';   // v1.494: the leaves
   if (sc.season === 'winter') return '❄ WINTER · DEEP SNOW: EVERYONE SLOWER, AND YOU LEAVE TRACKS';
   return '';
 }
