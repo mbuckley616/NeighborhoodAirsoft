@@ -571,9 +571,12 @@ function sideAllyOk(kid, zoneCap) {
 // place is dropped (as a benched kid's place stays empty). Free-for-alls and callouts keep their kids; so does Winnmark,
 // your tryouts on Seth's street (a turned replay's crossing is crewSides' own). Your VIP is the match's (step 4 renames
 // Protect Ryan as Cover Nick).
+// v1.495 (Michael: A on "Seth in the fall and winter Winnmark matches", 25 Nov): the fall's and the winter's Winnmark
+// matches are Winnmark too, so Seth is back on your side there, as their cards say
+const WINNMARK_SIDE_GROUPS = ['winnmark_court', 'fall_winnmark', 'winter_winnmark'];
 function crewSideRule(id, setup) {
   const ctx = findScenarioListContext(id), type = matchType(id);
-  if (!setup || !ctx || !type || type === 'ffa' || type === 'callout' || ctx.group === 'winnmark_court') return setup;
+  if (!setup || !ctx || !type || type === 'ffa' || type === 'callout' || WINNMARK_SIDE_GROUPS.includes(ctx.group)) return setup;
   const zoneCap = ZONE_CAPTAINS[ctx.group], crew = crewMembers(), pos = crewLadderPos(id);
   const known = k => !SETH_CREW_KNOWN[k] || pos > crewLadderPos(SETH_CREW_KNOWN[k]);
   const bad = setup.filter(es => !es.vip && es.charId && (es.team === 'player' ? !sideAllyOk(es.charId, zoneCap) : !sideFoeOk(es.charId, zoneCap, crew)));
@@ -705,7 +708,9 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   const sethFoe = turned || setup.some(es => es.charId === 'seth' && es.team !== 'player');
   const named = CREW_NAMED_ALLY[id];
   const allies = setup.filter(es => es.team === 'player'), foes = setup.filter(es => es.team !== 'player');
-  const keep = es => es.vip || es.charId === 'seth' || (es.charId === named && !crew.includes(named));
+  // v1.495: in the fall's and the winter's Winnmark the match's own allies (Seth and Trey, as the cards say) keep their places
+  const sctx = findScenarioListContext(id), seasonWk = !!sctx && sctx.group !== 'winnmark_court' && WINNMARK_SIDE_GROUPS.includes(sctx.group);
+  const keep = es => es.vip || es.charId === 'seth' || (es.charId === named && !crew.includes(named)) || (seasonWk && !turned && !crew.includes(es.charId));
   const kept = allies.filter(keep), slots = allies.filter(es => !keep(es));
   // v1.406 (D.57 step 4): a crew kid who is your VIP (Cover Nick, the lot's Night Shift) plays in his cap, not twice
   const keptCrew = kept.filter(es => crew.includes(es.charId)).map(es => es.charId);
