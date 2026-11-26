@@ -5,6 +5,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after the leaves (builder, 2026-11-26)**
+  The play lane is out of work again: v1.494 built the leaves (your A, 24 Nov) and v1.495 put Seth back on your side
+  in the season Winnmarks. Every other open play item is done, is a Fable card, or waits on you (your fall and winter
+  playtest, recording the voice clips, deploying the matchmaker). The maps lane is out too after v1.496 (white snow).
+  The one unpromoted idea for this lane is the critic's of 25 Nov (proposals.md, "Your kid dresses for the season too").
+  - A) **Your kid dresses for the season** _(recommended)_: in a fall or winter match your first-person arms get
+    sleeves to the wrist in your shirt's colour, and in winter knit gloves; the damage-report kid and the kid a friend
+    sees online or in co-op wear the same fall and winter clothes the other kids have worn since v1.489. Only colours
+    change on the hand meshes, so grips and hitboxes stay put. Play lane, one session.
+  - B) **A, and ice on the winter driveways**: the maps lane lays a few glassy patches (off the starts and main lanes)
+    where you and the kids slide a moment after letting go; a sprint onto ice drops you to a crouch; the play lane
+    handles the slide. One session each lane.
+  - C) **Hold the play lane until you've played fall and winter**: the builder stays idle; your playtest notes become
+    the next items.
+  - D) **Something else**: say what you'd like the play lane on next.
+  Recommendation: A. It is small, finishes v1.489 (in Snow Day yours are the only bare hands on the court, and Cold
+  Hands' card is about your gloves), and needs no new rule. Ice can wait until you have felt the snow.
+
 ## Answered
 
 - **Seth in the fall and winter Winnmark matches (critic, 2026-11-25; backlog Found in play)**
