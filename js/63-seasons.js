@@ -132,24 +132,39 @@ function applySeasonLook(built, season, timeOfDay, matchId) {
       matMemo.set(key, out);
       return out;
     };
+    const mOld = !Array.isArray(o.material) && o.material && o.material.color ? o.material.color.clone() : null;   // v1.496: the summer colour
     o.material = Array.isArray(o.material) ? o.material.map(swap) : swap(o.material);
     if (role === 'roof') roofs++;
     // vertex colours: a recoloured copy of the geometry; a vertex on a flat, upward face is ground
     const g = o.geometry, col = g && g.attributes && g.attributes.color;
     const usesVC = col && (Array.isArray(o.material) ? o.material.some(m => m && m.vertexColors) : o.material && o.material.vertexColors);
     if (!usesVC) continue;
-    let ng = geoMemo.get(g.uuid);
+    const big = size.x * size.z > 20000;
+    // v1.496: a big ground mesh whose vertex colours are multipliers on its own (green) material, as Bunratty's and
+    // Winnmark's are (leaf litter x1.05/0.67/0.83, red clay x1.6/0.74/0.97 on the summer grass): once the material is
+    // snow, an unchanged multiplier tinted the snow pink. Such a mesh is recoloured by what each vertex really shows
+    // (material x vertex), and the new vertex is that colour over the new material: snow where it is snow, the clay
+    // and litter kept where the season leaves them (a steep bank, a fall day).
+    const m0 = !Array.isArray(o.material) && o.material;
+    const mult = big && m0 && m0.vertexColors && mOld && m0.color && !m0.color.equals(mOld);
+    let ng = geoMemo.get(g.uuid + (mult ? '|' + m0.uuid : ''));
     if (!ng) {
       ng = g.clone();
-      const c = ng.attributes.color, n = ng.attributes.normal, big = size.x * size.z > 20000;
+      const c = ng.attributes.color, n = ng.attributes.normal;
       const out = new THREE.Color();
       for (let i = 0; i < c.count; i++) {
         tmp.setRGB(c.getX(i), c.getY(i), c.getZ(i));
         const vRole = !big ? role : (n && n.getY(i) > 0.9 ? 'ground' : 'leaf');   // a big mesh (ground and scenery): by its faces
-        if (seasonColor(tmp, vRole, season, out)) { c.setXYZ(i, out.r, out.g, out.b); verts++; }
+        if (mult) {
+          tmp.multiply(mOld);
+          const ch = seasonColor(tmp, vRole, season, out);
+          const s = ch ? out : tmp, M = m0.color;
+          c.setXYZ(i, s.r / Math.max(0.02, M.r), s.g / Math.max(0.02, M.g), s.b / Math.max(0.02, M.b));
+          if (ch) verts++;
+        } else if (seasonColor(tmp, vRole, season, out)) { c.setXYZ(i, out.r, out.g, out.b); verts++; }
       }
       c.needsUpdate = true;
-      geoMemo.set(g.uuid, ng);
+      geoMemo.set(g.uuid + (mult ? '|' + m0.uuid : ''), ng);
     }
     o.geometry = ng;
   }
