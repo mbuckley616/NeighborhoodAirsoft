@@ -160,6 +160,34 @@ const hw = await page.evaluate(() => ({ season: (Game.scene.userData.season || {
   costumes: Game.scenario.enemies.filter(e => e.mesh.costume).length, kids: Game.scenario.enemies.length, night: Game.scenario.timeOfDay || SCENARIOS.fall_bn_halloween.timeOfDay }));
 await g.scenario('winter_bn_first_snow');
 const ws = await page.evaluate(() => ({ season: (Game.scene.userData.season || {}).season, decor: !!Game.scene.getObjectByName('holidayDecor'), costumes: Game.scenario.enemies.filter(e => e.mesh.costume).length }));
+// v1.496 (critic, 26 Nov): the snow was pink on Bunratty and Winnmark: the big ground's vertex colours are multipliers
+// on its green (red clay x1.6/0.74/0.97), and the material went white under them. What the ground shows (material x
+// vertex) on its upward faces: no pink, nearly all snow.
+const groundSnow = () => page.evaluate(() => {
+  let best = null;
+  Game.scene.traverse(o => {
+    if (!o.isMesh || Array.isArray(o.material) || !o.material || !o.material.vertexColors || !o.material.color || !o.geometry.attributes.color) return;
+    if (o.material.color.getHex() === 0xffffff || o.name === 'seasonFx') return;
+    o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox, a = (bb.max.x - bb.min.x) * (bb.max.z - bb.min.z);
+    if (a > 20000 && (!best || a > best.a)) best = { o, a };
+  });
+  if (!best) return null;
+  const c = best.o.geometry.attributes.color, n = best.o.geometry.attributes.normal, M = best.o.material.color;
+  let up = 0, pink = 0, snow = 0;
+  for (let i = 0; i < c.count; i++) {
+    if (n.getY(i) <= 0.9) continue;
+    const R = c.getX(i) * M.r, G = c.getY(i) * M.g, B = c.getZ(i) * M.b;
+    up++;
+    if (R - G > 0.12 && B - G > 0.05) pink++;
+    if (R + G + B > 2.2 && Math.max(R, G, B) - Math.min(R, G, B) < 0.15) snow++;
+  }
+  return { up, pink, snow: +(snow / up).toFixed(3) };
+});
+const snowBn = await groundSnow();
+await g.scenario('winter_wk_short');
+const snowWk = await groundSnow();
+console.log('   ' + JSON.stringify({ snowBn, snowWk }));
+check('winter on Bunratty and Winnmark: the ground\'s snow is white, not pink (no pink vertex, over 95% snow)', snowBn && snowWk && snowBn.pink === 0 && snowWk.pink === 0 && snowBn.snow > 0.95 && snowWk.snow > 0.95, { snowBn, snowWk });
 await g.scenario('bunratty_night_team_2v2');
 const sn = await page.evaluate(() => ({ season: Game.scene.userData.season || null, decor: !!Game.scene.getObjectByName('holidayDecor'), costumes: Game.scenario.enemies.filter(e => e.mesh.costume).length }));
 console.log('   ' + JSON.stringify({ hw, ws, sn }));
