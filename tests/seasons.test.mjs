@@ -195,5 +195,20 @@ check('Halloween Night: a fall night with lanterns on the houses and every kid b
 check('a winter match is in winter, with no Halloween', ws.season === 'winter' && !ws.decor && ws.costumes === 0, ws);
 check('its summer match after it is the summer, with no Halloween (still parked)', sn.season === null && !sn.decor && sn.costumes === 0, sn);
 
+// v1.497 (critic, 27 Nov): a season card names only kids who are on the field. Bellfield in the Snow said "Andrew and
+// Evan are with you" and Lamplight in the Snow "Evan" has your back; neither was in the match (the crew takes the old
+// allies' places). Each kid a card names is on one side or the other of its match, on this save.
+const named = await page.evaluate(() => {
+  const kids = Object.keys(CAPTAIN_CREWS).concat(...Object.values(CAPTAIN_CREWS)).filter((k, i, a) => a.indexOf(k) === i);
+  const bad = [];
+  for (const ch of SEASON_CHAPTERS) for (const z of ch.zones) for (const m of z.matches) {
+    const on = (crewSetup(m.id) || []).map(e => e.charId);
+    for (const k of kids) if (new RegExp('\\b' + k + '\\b', 'i').test(m.desc) && !on.includes(k)) bad.push(m.id + ': ' + k);
+  }
+  return { kids: kids.length, bad };
+});
+console.log('   ' + JSON.stringify(named));
+check('every kid a season card names plays in its match', named.kids > 20 && named.bad.length === 0, named);
+
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
