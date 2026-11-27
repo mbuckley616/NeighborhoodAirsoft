@@ -5,6 +5,25 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Whose kids play in the fall and winter matches (builder, 2026-11-27; backlog Found in play, v1.497)**
+  In the summer each street's crew plays on its own street: Mitchell's kids only at Bunratty, Mason's only at
+  Northcliff, Jordan's only at the school (Seth's crew turns up anywhere, Marcus's where Seth or Marcus captains). The
+  fall and winter zones are new zone names, so that rule finds no captain and lets anybody play anywhere: on a fresh
+  save Lamplight in the Snow puts Haden and Connor on your side and Andrew, Trey and Brooke against you on Bellfield;
+  Snowed In at the Doors puts Mitchell on your side at the Market; Raking Season has Mason with you on Bunratty. Nobody
+  chose this; it fell out of the season zones having their own names. (Winnmark's season matches skip the rule on
+  purpose, your A of 25 Nov on Seth; that stays either way.)
+  - A) **The summer's streets hold in fall and winter** _(recommended)_: a season zone takes its summer street's
+    captain (Bunratty's fall is Mitchell's street, as its summer is), so each street's kids play at home again. The
+    fields keep their sizes; only who fills them changes, and the `seasons` suite checks every season card that names
+    a kid still names one on the field.
+  - B) **Mixed fields are right for the season** ("everybody's out"): leave the fields as they are, and the builder
+    writes it down in the code and a test so it stays on purpose.
+  - C) **A in the fall, B in the winter**: school's on in the fall, so streets keep to themselves; over the winter
+    break everybody's out together.
+  Recommendation: A. The summer taught you whose street is whose, and Mitchell turning up on your side at the Market
+  reads as a slip, not a season.
+
 - **What the play lane builds next, after the leaves (builder, 2026-11-26)**
   The play lane is out of work again: v1.494 built the leaves (your A, 24 Nov) and v1.495 put Seth back on your side
   in the season Winnmarks. Every other open play item is done, is a Fable card, or waits on you (your fall and winter
