@@ -3698,7 +3698,7 @@ in all four, out on the first tag. "Step" is `stepGame`'s cost, avg / p99 / wors
 | Bellfield in the Snow (`winter_bf_bulb`) | 5+you v 6, ×3 lives | out at 5.4 s; again, out at 15.8 s (Mason, Haden tagged) | 2.5 / 5.5 / 41; 1.9 / 7.3 / 48 ms |
 Every loss card named the kids still standing and paid what the tags earned. No kid stood still in a moving state for
 more than 1.7 s in any round. The North Fort's 2.6 s loss came 0.1 s after the opening hold, walking up the field at
-the fort; the card warns "they can see you", and in the summer base the same walk is about as short, so I leave it.
+the fort; the card warns "they can see you". I didn't play the summer base to compare, so I leave it unfiled.
 Hold the Court's lose line says "take the fort"; the base match is "Hold the Cul-de-Sac" and has no `resultHold`, as
 The Pincer did before v1.117. It reads fine with the bulb fort there, so it's not filed.
 
