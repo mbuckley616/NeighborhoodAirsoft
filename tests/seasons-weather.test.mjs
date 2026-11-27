@@ -165,8 +165,13 @@ const trail = await page.evaluate(() => {
     for (let k = 0; k <= 10; k++) { const t = k / 10; F.list.push({ x: e.pos.x + (at.x - e.pos.x) * t, z: e.pos.z + (at.z - e.pos.z) * t, y: 0, t: now - 1 + t, by: who }); }
   }
   const f0 = foes[0], w0 = want.get(f0), unit = seasonTrailFor(f0, w0.who), far = seasonTrailFor({ pos: { x: me.x + 400, z: me.z + 400 } }, w0.who);
-  for (const e of foes) { e._onTrail = null; e._trailT = 1; }
-  for (let i = 0; i < 30; i++) stepGame(1 / 60);
+  // 27 Nov: with no line, and nothing seen since the trail was laid. Left to the map, 5-6 of the 8 foes had a line all 30
+  // frames, and one who saw his target on the frame before couldn't take the trail (it is no newer), so under load (more
+  // of the page's own frames before this) none was left to follow, 2 runs in 6
+  for (const e of foes) { e._onTrail = null; e._trailT = 1; if (e._lastSawPlayer) e._lastSawPlayer = Math.min(e._lastSawPlayer, now - 2); }
+  const sight = aiSightY;
+  aiSightY = () => null;
+  try { for (let i = 0; i < 30; i++) stepGame(1 / 60); } finally { aiSightY = sight; }
   const followed = foes.filter(e => e._onTrail && want.get(e) && e._onTrail.by === want.get(e).who);
   return { foes: foes.length, unitNewest: !!unit && Math.hypot(unit.x - w0.at.x, unit.z - w0.at.z) < 0.01, far: far === null, followed: followed.length,
     lastSeenAtTarget: followed.every(e => { const w = want.get(e), now = w.who.pos;   // where the trail ended, or (a kid target walks on, laying newer prints) where he is now
