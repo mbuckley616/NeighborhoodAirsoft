@@ -316,11 +316,13 @@ const SEASON_CHAPTERS = [
     ] },
     { key: 'winter_northcliff', pin: 'northcliff', name: "Northcliff / Martin's Landing", region: 'northcliff', when: 'Christmas week', matches: [
       { id: 'winter_bf_bulb', base: 'bellfield_3v3', scenarioName: 'Bellfield in the Snow', holiday: 'christmas',
-        desc: "Andrew and Evan are with you on Bellfield against Christian's side. The bulb's white over and every yard has lights up." },
+        // v1.497: your crew, as on the summer's card (v1.408): the crew takes the old allies' places, so Andrew and Evan
+        // were never on the field
+        desc: "Your crew's back on Bellfield against Christian's side. The bulb's white over and every yard has lights up." },
       { id: 'winter_bf_fort', base: 'bellfield_defend_fort', scenarioName: 'Hold the Snow Fort', holiday: 'christmas',
         desc: "The bulb fort's got a foot of snow on it now. Hold it against Mason's crew until the timer's done." },
       { id: 'winter_bf_lamplight', base: 'bellfield_night_4v4', scenarioName: 'Lamplight in the Snow', holiday: 'christmas',
-        desc: "Teams on Bellfield after dark, the streetlamps on the snow. Haden, Connor and Evan have your back." },
+        desc: "Teams on Bellfield after dark, the streetlamps on the snow. Your crew's got your back against Mason's side." },   // v1.497: Evan was never on the field
     ] },
     { key: 'winter_market', pin: 'market_lot', name: 'Riverside Market', region: 'east_roswell', when: 'January', matches: [
       { id: 'winter_lot_corral', base: 'lot_team_3v3', scenarioName: 'Cart Corral on Ice',
